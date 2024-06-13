@@ -52,6 +52,26 @@ git add .
 
 ### 05. git commit
 
+- The three stages of commit:
+
+  1. Modify
+
+  2. Stage
+
+     ```
+     # Stage all new changes
+     git add .
+
+     # Stage a particular file changes
+     git add <FILE_NAME>
+     ```
+
+  3. Commit
+
+     ```
+     git commit -m "<COMMIT_MESSAGE>"
+     ```
+
 ### 06. git branch
 
 - This command lets you create isolated development environments within a single repository.
@@ -102,20 +122,121 @@ git add .
 
 ### 08. git checkout
 
+- A _checkout_ is the act of switching between different versions of a target entity.
+- This commands lets you checking out old commits and old file revisions.
+- This commands also lets you navigate to any existing branches.
+  <br/><br/>
+- Reviewing old commits and switch to any previous commit
+
+  ```
+  git log --oneline
+  git commit <COMMIT_ID>
+  ```
+
+- Switching between the existing branches
+
+  ```
+  git checkout <EXISTING_BRANCH_NAME>
+  ```
+
+- Create a new branch and immediately switch to it
+
+  ```
+  git checkout -b <NEW_BRANCH_NAME>
+  ```
+
+- To checkout a remote branch you have to first fetch the contents of the branch, and then checkout
+
+  ```
+  git checkout -b ＜branchname＞
+  git reset --hard origin/＜branchname＞
+  ```
+
 ### 09. git clone
+
+- _git clone_ is used to create a copy of a target repository.
+
+  ```
+  # Syntax
+  git clone <GIT_REPO_URL>
+
+  # Example
+  git clone https://github.com/kbindesh/sample-repo.git
+  ```
+
+- Cloning to a specific folder
+
+  ```
+  git clone <REPO> <DIRECTORY>
+  ```
+
+- Cloning a specific tag
+
+  ```
+  git clone --branch <TAG> <REPO>
+  ```
+
+- Cloning a specific remote branch (-branch)
+
+  ```
+  git clone --branch <BRANCH_NAME>
+  ```
 
 ### 10. git config
 
-### 11. git diff
+- git config command is used to set Git configuration values on a global or local project level.
 
-### 12. git clean
+<br/>
+
+- Set git user email value
+
+  ```
+  git config user.email "sample_id@example.com"
+  ```
+
+- git config levels
+
+  - --local
+  - --global
+  - --system
+
+  ```
+  # Set user email at "global" level
+  git config --global user.email "your_email@example.com"
+
+  # Set user email at "local" level
+  git config --local user.email "your_email@example.com"
+
+  # Set user email at "system" level
+  git config --system user.email "your_email@example.com"
+  ```
+
+### 11. git show (view previous versions)
+
+- To view and learn what changes have been made to your project, you can use the git show command followed by the name of the commit.
+- You don’t need to write the full name; the first seven letters suffice.
+
+  ```
+  git show <NAME_OF_COMMIT>
+  ```
+
+### 12. git diff (reviewing current changes)
+
+- _git diff_ command is used to examin differences between the last commit and the current
+  working directory.
+
+  ```
+  git diff
+  ```
+
+- If you only need to check the changes made to a single file, not the entire project.
+
+  ```
+  git diff <FILE_NAME>
+  ```
 
 ### 13. git revert
 
 ### 14. git revert
 
 ### 15. git merge
-
-```
-
-```
