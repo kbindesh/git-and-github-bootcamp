@@ -1,5 +1,7 @@
 # Introduction to GitHub
 
+<img src="images/localvsremote-repos.png" data-canonical-src="images/localvsremote-repos.png" width="400" height="400" />
+
 ## 01. What is GitHub?
 
 - GitHub is a developer platform that allows developers to create, store, manage and share their code.
