@@ -43,7 +43,7 @@ There are basically three authentication methods avaiable with GitHub:
 - Create a folder on your local system and open it in Command prompt:
 
 ```
-cd <location_of_your_folder>
+cd <folder_name_with_complete_location>
 
 # Example
 cd C:\GitTutorials
@@ -89,6 +89,8 @@ git branch
 
 ## Step-07: Stage and Commit the changes (locally)
 
+- **Stage the changes**
+
 ```
 # Stage the changes made in one file
 git add <filename>
@@ -97,13 +99,23 @@ git add <filename>
 git add .
 ```
 
-- Commit the changes
+- **Commit the changes**
 
 ```
 git commit -m "commit_message_here"
 
 # Example
 git commit -m "App version 1.0"
+```
+
+- **List all the commits made so far on a branch (here 'main')**
+
+```
+# List commits with a lot of details
+git log
+
+# List commits details | One line per commit
+git log --oneline
 ```
 
 ## Step-08: Push the changes to GitHub repository
@@ -117,3 +129,27 @@ git push -u origin main
 ```
 
 ## Step-09: Verify the GitHub repository for new changes
+
+- Go to your GitHub Account >> Open the repository you created on Step#1.
+- You should see the files present on your local git repo in GitHub repo.
+
+## Step-10: Modify the code and Push the changes
+
+- Make some changes in the code and save it.
+- Then stage the changes by running following command:
+
+```
+git add .
+```
+
+- Commit the changes
+
+```
+git commit -m "App version 2.0"
+```
+
+- Finally, push the changes to GitHub repository:
+
+```
+git push -u origin main
+```
