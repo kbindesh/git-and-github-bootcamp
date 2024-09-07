@@ -18,6 +18,10 @@
 
 ## 03. Types of Version Control Systems
 
+1. Local VCS
+2. Centralized VCS
+3. Distributed VCS
+
 ### 3.1 `Local` Version Control system
 
 - These were the first VCSs created to manage source code.
