@@ -1,4 +1,4 @@
-# GitHub Branch
+# Understanding Git Branches
 
 ## 01. GitHub Workflow
 
@@ -58,35 +58,92 @@
 
 ## 05. Working with GitHub Branches
 
-### Step-5.1 Create a Branch
+### Step-5.1: Create a Branch
 
 ```
 # Syntax
 git branch <new_branch_name>
 
-# Example
-git branch develop
+# Examples
+git branch feature-branch
+git branch fix-branch
+git branch test-branch
 ```
 
-### Step-5.2 Switch to a particular branch
+### Step-5.2: Switch to a particular branch
 
-- List all the branches
+- **List all the branches**
 
   ```
   git branch
   ```
 
-- Switch to a branch
+- **Switch to a particular branch**
 
   ```
   git checkout <branch_name>
 
   # Example
-  git checkout develop
+  git checkout feature-branch
   ```
 
-### 5.3 Merging a Branch
+### Step-5.3: Make changes on to the New branch & Commit
 
-### 5.4 Deleting a Branch
+- Add/Modify the app files.
 
-### 5.5 Pushing a Branch to Remote repo
+- Now, stage and commit the changes on feature-branch
+
+```
+# Make sure you're on feature-branch
+git branch
+
+[If the preceding command says you're on another branch, simple switch to feature branch by running following command]
+git checkout feature-branch
+
+# Stage the changes
+git add .
+
+# Commit the changes
+git commit -m "New button feature"
+```
+
+### Step-5.4: Push new Branch (feature) changes to GitHub repo
+
+```
+git push -u origin feature-branch
+
+[Verify the changes from the GitHub console]
+```
+
+### Step-5.5: Merging a Branch (here feature-branch into main branch)
+
+- Switch to destination branch (here, it is main branch)
+
+```
+git checkout main
+```
+
+- Merge the feature-branch into main branch
+
+```
+git merge feature-branch
+```
+
+- Finally, push the updated main branch (with new feature) to GitHub
+
+```
+git push -u origin main
+```
+
+### Step-5.6: Delete a Branch
+
+```
+# Delete the branch locally
+git branch -d <branch-name>
+
+# Example - Delete the branch locally
+git branch -d feature-branch
+
+# Delete the feature-branch from the GitHub repo
+git push origin --delete feature-branch
+```
