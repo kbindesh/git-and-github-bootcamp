@@ -7,3 +7,7 @@
 - **Create a password** >> **Continue**
 - **Enter a Username**: <github_username>
 - Verify your email account >> **Create Account**
+
+## 02. Install IDE - Visual Studio Code
+
+-

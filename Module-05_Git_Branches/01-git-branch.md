@@ -147,3 +147,11 @@ git branch -d feature-branch
 # Delete the feature-branch from the GitHub repo
 git push origin --delete feature-branch
 ```
+
+## 06. Tips & Tricks
+
+- In order to create a new branch and switch on to it in a single command:
+
+```
+git checkout -b <new_branch_name>
+```
