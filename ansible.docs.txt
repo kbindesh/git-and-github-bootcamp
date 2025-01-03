@@ -1,0 +1,282 @@
+ANSIBLE CONTROLLER - 22
+=====================
+sudo su -
+vi /etc/hostname     - ansible-controller
+hostname ansible-controller
+
+useradd ansibleadmin
+password ansibleadmin
+
+vi /etc/sudoers OR visudo 
+[shift+G]
+ansibleadmin	ALL=(ALL)	NOPASSWD:ALL
+
+sudo su - ansibleadmin
+
+# Generate SSH keys for managed nodes (client)
+ssh-keygen
+[will create ssh keys under /home/ansibleadmin/.ssh directory]
+
+exit
+[logout from the ansibleadmin user | back to root]
+
+vi /etc/ssh/sshd_config
+PasswordAuthentocation  yes
+
+service sshd restart
+
+INSTALL ANSIBLE ON THE ABOVE CREATED EC2 INSTANCE
+=================================================
+sudo su - 
+python --version
+pip3 --version
+
+yum install -y python
+
+pip3 install ansible
+OR 
+amazon-linux-extras install -y ansible
+
+ansible --version
+
+mkdir /etc/ansible
+cd /etc/ansible
+
+vi ansible.cfg		
+[https://github.com/ansible/ansible/blob/stable-2.9/examples/ansible.cfg]
+
+deprecation_warning=False
+[save & exit]
+
+more ansible.cfg
+
+touch hosts
+[don't add any content to it yet]
+
+SETUP MANAGED NODES - EC2 
+=============================
+sudo su -
+vi /etc/hostname     - web-client
+hostname web-client
+
+useradd ansibleadmin
+password ansibleadmin
+
+[no need to generate a new keypair | will copy from the ansible controller]
+
+
+# Enable password based authentication
+vi /etc/ssh/sshd_config
+PasswordAuthentication yes
+
+# Reload the sshd service
+service sshd reload 
+
+# Add ansibleadmin user to the sudoers group
+vi /etc/sudoers
+OR 
+visudo
+
+ansibleadmin	ALL=(ALL)	NOPASSWD:ALL
+
+
+ESHTABLISH CONNECTION BETWEEN ANSIBLE CONTROLLER AND MANAGED NODES
+=======================================================
+
+# Switch to controller node
+sudo su -
+
+vi /etc/ansible/hosts
+[add private_ip in the file and save]
+
+sudo su - ansibleadmin
+
+# Copy the ssh key to the managed node (client)
+ssh-copy-id <private_ip _of_client_node>
+
+[Enter the password of ansibleadmin user of controller node if prompted]
+
+# To verify the connectivity
+ansible all -m ping
+
+
+
+CREATE A NEW PLAYBOOK | FOR CREATING USER ON CLIENT
+===================================================
+
+---
+- name: Playbook for configuring users
+  hosts: all
+  become: yes
+  tasks:
+    - name: Create a user
+      user:
+        name: Bindesh
+         
+
+CREATE A PLAYBOOK | INSTALL PACKAGES
+====================================
+
+# Update the /etc/ansible/hosts file
+
+```
+[webservers]
+<private_ip_of_client>
+```
+
+
+---
+- name: Install Packages
+  hosts: webservers
+  become: true
+  tasks:
+    - name: Install HTTPD
+      yum:
+        name: httpd
+        state: latest
+    - name: Install tree
+      yum:
+        name: tree
+	state: latest
+
+[switch to client vm and verify the installation]
+[yum list installed | grep httpd]
+
+
+CREATE A PLAYBOOK | FILE MODULE
+===============================
+
+---
+- name: Create a file
+  hosts: webservers
+  become: yes
+  tasks:
+    - name: Create a Directory
+      file:
+        path: /home/ansibleadmin/newdir
+        state: directory
+    - name: Create a file
+      file:
+        path: /home/ansibleadmin/newdir/newfile.txt
+        state: touch
+
+CREATE A DIRECTORY + ansible.cfg + hosts
+=========================================
+
+--------------
+ansible.cfg
+--------------
+[defaults]
+
+# some basic default values...
+
+inventory      = /home/ansibleadmin/hosts
+
+------
+hosts
+------
+
+[webservers]
+<private_ip_of_webservers>
+
+
+
+GATHER FACTS
+============================
+
+ansible all -m module
+
+
+---
+- name: Create a file
+  hosts: webservers
+  gather_facts: no
+  tasks:
+    - name: Create a Directory
+      file:
+        path: /home/ansibleadmin/newdir
+        state: directory
+
+[Execute the above playbook, This won't gather facts]
+
+
+CONDITIONAL EXECUTION - WHEN
+=============================
+
+Create a playbook for installing package based on Linux distro
+
+---
+- name: Install Packages
+  hosts: webservers
+  become: true
+  tasks:
+    - name: Install HTTPD
+      yum:
+        name: httpd
+        state: latest
+      when: ansible_os_family == "RedHat"
+
+    - name: Install HTTPD on Ubuntu servers
+      apt:
+        name: apache2
+        state: present
+      when: ansible_os_family == "Debian"
+
+
+[to execute it in dryrun mode use --check option]
+
+
+LIST and with_items
+====================
+
+- name: "loop through list"
+  ansible.builtin.debug:
+    msg: "An item: {{ item }}"
+  with_items:
+    - 1
+    - 2
+    - 3
+
+- name: Install apps
+  hosts: myhosts
+  become: yes
+  tasks:
+    - name: Install tools
+      apt:
+        name: "{{ item }}"
+        state: latest
+      loop:
+        - htop
+        - wget
+        - tree
+        - git
+        - nodejs
+
+---
+- name: Create/validate multiple users
+  hosts: myhosts
+  become: yes
+  tasks:
+    - name: Ensure users are present
+      user:
+        name: "{{ item }}"
+        state: present
+        shell: /bin/bash
+      loop:
+        - mjordan
+        - mmathers
+        - pparker
+
+---
+- name: Copy a file to multiple locations
+  hosts: myhosts
+  tasks:
+    - name: Copy file
+      copy:
+        src: ~/myfile.conf
+        dest: "{{ item }}"
+      loop:
+        - /destination1/myfile.conf
+        - /destination2/myfile.conf
+        - /destination3/myfile.conf
+
