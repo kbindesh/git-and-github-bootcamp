@@ -5,7 +5,7 @@ vi /etc/hostname     - ansible-controller
 hostname ansible-controller
 
 useradd ansibleadmin
-password ansibleadmin
+passwd ansibleadmin
 
 vi /etc/sudoers OR visudo 
 [shift+G]
@@ -45,7 +45,6 @@ cd /etc/ansible
 vi ansible.cfg		
 [https://github.com/ansible/ansible/blob/stable-2.9/examples/ansible.cfg]
 
-deprecation_warning=False
 [save & exit]
 
 more ansible.cfg
@@ -160,7 +159,7 @@ CREATE A PLAYBOOK | FILE MODULE
         path: /home/ansibleadmin/newdir/newfile.txt
         state: touch
 
-CREATE A DIRECTORY + ansible.cfg + hosts
+CREATE A DIRECTORY + ansible.cfg + hosts - /home/ansibleadmin
 =========================================
 
 --------------
@@ -168,29 +167,30 @@ ansible.cfg
 --------------
 [defaults]
 
-# some basic default values...
-
-inventory      = /home/ansibleadmin/hosts
+inventory      = /home/ansibleadmin/ansible-labs/hosts
+deprecation_warnings=False
+system_warnings=False
+command_warnings=False
+interpreter_python=auto_silent
 
 ------
 hosts
 ------
 
-[webservers]
-<private_ip_of_webservers>
+<private_ip_of_client>
 
 
-
+============================
 GATHER FACTS
 ============================
 
-ansible all -m module
+ansible all -m setup
 
 
 ---
 - name: Create a file
-  hosts: webservers
-  gather_facts: no
+  hosts: all
+  gather_facts: no		# HIGHLIGHT THIS 
   tasks:
     - name: Create a Directory
       file:
@@ -200,14 +200,16 @@ ansible all -m module
 [Execute the above playbook, This won't gather facts]
 
 
+=============================
 CONDITIONAL EXECUTION - WHEN
 =============================
+What if I want to install httpd on Ubuntu and RHEL servers?
 
 Create a playbook for installing package based on Linux distro
 
 ---
 - name: Install Packages
-  hosts: webservers
+  hosts: all
   become: true
   tasks:
     - name: Install HTTPD
@@ -223,29 +225,56 @@ Create a playbook for installing package based on Linux distro
       when: ansible_os_family == "Debian"
 
 
+- name: Uninstall HTTPD
+  hosts: all
+  become: true
+  tasks: 
+    - name: Stop HTTPD service
+      yum:
+        name: httpd
+        state: stopped
+      when: ansible_os_family == "RedHat"
+    - name: Remove HTTPD service
+      yum:
+        name: httpd
+        state: removed
+      when: ansible_os_family == "RedHat"
+    - name: Install HTTPD on Ubuntu servers
+      apt:
+        name: apache2
+        state: stopped
+      when: ansible_os_family == "Debian" 
+
 [to execute it in dryrun mode use --check option]
 
 
+====================
 LIST and with_items
 ====================
 
-- name: "loop through list"
-  ansible.builtin.debug:
-    msg: "An item: {{ item }}"
-  with_items:
-    - 1
-    - 2
-    - 3
+---
+- name: Install Packages
+  hosts: all
+  become: true
+  tasks:
+    - name: "loop through list"
+      debug:
+        msg: "An item: {{ item }}"
+      with_items:
+        - 1
+        - 2
+        - 3
+
 
 - name: Install apps
-  hosts: myhosts
+  hosts: all
   become: yes
   tasks:
     - name: Install tools
-      apt:
+      yum:
         name: "{{ item }}"
         state: latest
-      loop:
+      with_items:
         - htop
         - wget
         - tree
