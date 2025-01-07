@@ -309,3 +309,88 @@ LIST and with_items
         - /destination2/myfile.conf
         - /destination3/myfile.conf
 
+==================================
+Variables
+==================================
+ansible localhost -m command -a "uname"
+
+---
+name: Get the uname
+hosts: localhost
+gather_facts: false
+tasks: 
+  - name: Get the uname of localhost 
+    command: "uname"
+
+[Won't display the display the uname by default | use register]
+
+---
+name: Get the uname
+hosts: localhost
+gather_facts: false
+tasks: 
+  - name: Get the uname of localhost 
+    command: "uname"
+    register: systemUname
+  - name: Display the fetched uname
+    debug:
+      msg: "{{ systemUname }}"
+
+[You can write the same logic in the following way]
+---
+name: Get the uname
+hosts: localhost
+gather_facts: false
+tasks: 
+  - name: Get the uname of localhost 
+    command: "uname"
+    register: systemUname
+  - name: Display the fetched uname
+    debug:
+      var: systemUname		# systemUname.stdout/
+       
+
+----------------------------------------------------------
+set_fact - module to re-initialize an existing variable or declare new variables
+
+---
+name: Demonstrate set_fact
+hosts: localhost
+gather_facts: false
+vars:
+  - num: 10
+tasks: 
+  - name: Set_fact demo
+    debug:
+      msg: "x value is {{ num }}"
+  - name: Reinitialize the num variable
+    set_fact:
+      num = 20
+      new_var = "Bindesh"
+  - name: "Print num and new_var variable values"
+    debug:
+      msg:
+        - "num value is {{ num }}"
+	- "new_var value is {{ new_var }}"
+
+
+----------------------------------------------------------
+OPERATIONS ON VARIABLES
+----------------------------------------------------------
+
+Arithmetic Operators - + - / *
+Comparison Operators ==, !=, < > >= <= | for string ==, !=
+Membership operators in, not in
+ 
+
+==========================================================
+HANDLERS
+==========================================================
+
+==========================================================
+Facts & Systemd facts
+Variables - variables, register, setfact, operations on variables
+Conditional statements
+Handlers
+Roles
+CICD Integration
