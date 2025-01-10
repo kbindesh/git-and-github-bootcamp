@@ -387,6 +387,44 @@ Membership operators in, not in
 HANDLERS
 ==========================================================
 
+---
+name: Demonstrate handlers
+hosts: all
+become: true
+tasks:
+  - name: Install webserver
+    yum: 
+      name: httpd
+      state: installed
+    notify: start apache
+
+handlers:
+- name: start httpd
+  service:
+    name: httpd
+    state: started 
+    when: ansible_os_family == "RedHat"
+
+
+ansible-playbook setup-webserver --check
+==========================================================
+ROLES
+==========================================================
+
+ansible-galaxy init setup-apache
+[will create a directory structure]
+
+tree setup-apache
+
+[for playbook, refer to the screenshots]
+
+==========================================================
+Facts & Systemd facts
+Variables - variables, register, setfact, operations on variables
+Conditional statements
+Handlers
+Roles
+CICD Integration
 ==========================================================
 Facts & Systemd facts
 Variables - variables, register, setfact, operations on variables
