@@ -1,0 +1,78 @@
+==========================
+JENKINS KEY TERMINOLOGIES
+==========================
+- Job/Project
+- Node
+- Build
+- Plugin
+- Workspace
+
+==============
+SETUP JENKINS
+==============
+WALKTHROUGH OF JENKINS DASHBOARD
+=================================
+- Manage Jenkins >> System
+- Manage Jenkins >> Tools
+- Manage Jenkins >> Plugins
+- Manage Jenkins >> Nodes
+- Manage Jenkins >> Users
+
+Lab-01 - Add Project Information
+-----------------------------------
+Manage Jenkins >> System >> System Message >> "Deployment details"
+
+
+Lab-02 - Creating user & grant permissions
+-------------------------------------------
+- Manage Jenkins >> Users >> Create user
+
+Security Realm (Authentication)
+- Manage Jenkins >> Security >> Security Realm >> Jenkins own user database
+
+Authorization
+- Manage Jenkins >> Security >> Authorization >> Matrix based security
+
+Lab-03 - RBAC for jenkins users
+---------------------------------
+- Install "Role-based authorization strategy" plugin
+Manage Jenkins >> Plugins >> Installed plugins >> Role-based authorization strategy
+
+- Now, navigate to Manage Jenkins >> Security >> Authorization >> <you will see a new option> "role-based strategy" >> Save
+- Next, to configure RBAC >> Manage jenkins >> Manage and Assign roles >> Role to add >> manager & devops-engg >> click Add
+- Then, Assign the users to the created roles Manage Jenkins >> Manage and Assign Roles >> Assign Roles >> Select the users & roles
+
+
+Lab-04 - Create our first Jenkins job
+------------------------------------------
+Name: hello-world 
+type: freestyle project
+description
+Build steps: 
+  cd /
+  ls -la
+
+- Demonstrate configure, console output options
+
+Lab-05 - Create a Jenkins job for executing java application
+-------------------------------------------------------------
+Name: hello-world 
+Type: freestyle project
+Build Trigger: Manual
+Build steps: 
+  cd <java_app_directory_location>
+  javac HelloWorld.java
+  java HelloWorld
+
+[Build now | Should see hello world message]
+
+[(optional) Try with Build Trigger: Trigger build remotely >> generate token >> access remote url in the browser]
+
+
+Lab-06 - Jenkins integration with github using poll SCM
+-------------------------------------------------------
+
+
+Lab-07 - Jenkins integration with github using webhooks
+-------------------------------------------------------
+
