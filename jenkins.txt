@@ -69,10 +69,75 @@ Build steps:
 [(optional) Try with Build Trigger: Trigger build remotely >> generate token >> access remote url in the browser]
 
 
-Lab-06 - Jenkins integration with github using poll SCM
+Lab-XX - Jenkins Job chaining
+------------------------------
+- Create 3 jobs, namely Job-01, Job-02, Job-03
+- Now, configure Job-01 >> Post-build actions >> Build other projects >> Job-02
+- Then configure Job-03 >> Build Triggers >> Build after other projects are build >> Job-02
+
+
+====================================
+CONTINUOUS INTEGRATION WITH JENKINS
+====================================
+
+There are 2 way of integrating Jenkins with Github:
+- Git SCM polling
+- Webhooks
+
+Lab-XX - Jenkins integration with github using webhooks
 -------------------------------------------------------
+- Develop the app and push it in Github repo
+- Setup Jenkins server
+- Create a Github webhook
+  - http://<jenkins_server_ip>:8080/github-webhook/
+  - Push events only
+- Create a Jenkins job
+  - Type: Freestyle
+  - SCM: Git >> add github URL >> branch
 
-
-Lab-07 - Jenkins integration with github using webhooks
+Lab-XX - Jenkins integration with github using poll SCM
 -------------------------------------------------------
+- To communication with jenkins, you should've git plugin
+  Manage Jenkins >> Plugins >> Installed >> Git plugin
 
+- Create a new Github repo
+- Develop and push the developed java app to github repo
+- Create a new jenkins job >> 
+  >> Enable "GitHub project" checkbox >> Copy the repo page URL (not repo URL .git)
+  >> Source code management >> Git >> REPO_URL
+  >> Build Trigger: Poll SCM
+     >> For running job every min : * * * * * 
+
+Lab-XX - Compile & Build maven application using Jenkins with Github webhook
+-----------------------------------------------------------------------------
+# INSTALL MAVEN 
+
+# SETTING UP MAVEN PROJECT
+
+# JENKINS INTEGRATION WITH MAVEN - 01
+
+# JENKINS INTEGRATION WITH MAVEN - 02 (using maven integration plugin)
+
+# BUILD MAVEN APP USING JENKINS
+
+Lab-XX - Sending Email notification with Jenkins
+-------------------------------------------------
+
+Lab-XX - Static code Analysis with SonarQube
+-------------------------------------------------
+
+Lab-XX - Java App deployment on Apache Tomcat server | Integrating Jenkins with Tomcat
+---------------------------------------------------------------------------------------
+
+==================
+JENKINS PIPELINES
+==================
+
+- Introduction
+- Pipeline types
+  1. Build Pipelines
+  2. Delivery Pipelines
+- Jenkins Pipeline
+- Multi-branch Pipeline
+
+Scenario: There are 3 jobs namely Build job, Test Job, Deployment job
