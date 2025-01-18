@@ -1,0 +1,87 @@
+docker build -t image1 .
+docker run -it --name container -p 4000:8080 image1
+
+docker run --rm -it --name test alpine /bin/sh
+apk add curl
+curl http://172.17.0.2:8080
+
+-----------------------------
+- By default, the docker run command does not attach the standard input stream (STDIN) of the process within the container to the host terminal. 
+- However, it does connect the standard output (STDOUT) and standard error (STDERR) streams. - In other words, we’ll only see the output being printed without a way to send any input to it.
+- If the main process of the container is expecting input, running it without attaching the STDIN will cause it to exit immediately.
+
+
+# Running a Process With Input Prompt Without Attaching STDIN
+
+docker run ubuntu passwd root
+New password: Password change has been aborted.
+passwd: Authentication token manipulation error
+passwd: password unchanged
+
+
+In this case, we see that the command now waits for our input.
+
+When we pass the -i option, the docker run command attaches the input device to the main process within the container. Specifically, the input device it takes is the input device to the docker run command. Note the term “input device” here because the input device is not necessarily the terminal.
+
+------------------------------------------------------------------
+# Attaching Output Pipe to STDIN
+
+We can also attach the output pipe to the STDIN of the process within the Docker container. For instance, let’s pipe the output of the echo command to a cat process in the container:
+
+$ echo "This is a piped input" | docker run -i ubuntu cat
+
+-------------------------------------------------------------------
+# Allocating the Pseudo-Terminal With the -t Option
+
+- From the official documentation, Docker states that the -t option will “allocate a pseudo-TTY” to the process inside the container. 
+- TTY stands for Teletype and can be interpreted as a device that offers basic input-output. 
+- The reason it’s a pseudo-TTY is that there’s no physical teletype needed, and it’s emulated using a combination of display driver and keyboard driver.
+
+- For the sake of this article, it’s sufficient to think of a pseudo-TTY as a terminal console we’re using for running commands and reading output in Linux.
+
+------------------------------------------------------------------------
+# Missing Functionality Without the -t Option
+
+- Without passing the -t option to docker run for the interactive mode, not all of the terminal-specific functionality will be working.
+
+For example, most programs that prompt the user for a password will turn off the echo of the input. This allows the password to be hidden from the console.
+
+Let’s run the passwd command with the -i option and complete the prompt:
+$ docker run -i ubuntu passwd root 
+New password: thisisanewpassword 
+Retype new password: thisisanewpassword 
+passwd: password updated successfully
+
+Under typical usage, we know that passwd‘s password prompt does not display our password input. The way passwd achieves this is by turning off the echo option of the terminal. Since we started this process without allocating a pseudo-TTY, the echo-off functionality of the terminal is not taking effect here.
+
+--------------------------------------------------------------------------
+# Enabling Complete Terminal Functionality Using the -t Option
+
+To enable complete terminal functionality, including the echo-off option, we can pass the -t option along with -i:
+
+$ docker run -i -t ubuntu passwd root
+New password: 
+Retype new password: 
+passwd: password updated successfully
+
+
+Now, the echo-off option on the passwd command is working correctly under the pseudo-TTY environment.
+
+
+-----------------------------------------------------------------------------
+#  “Input device is not a TTY” Error
+
+If we specify -t and then attach an output pipe to the STDIN of the container’s process, the docker run command will complain that the “input device is not a TTY”. This is because when the -t option is present, docker run will check if the input device is a TTY-like device. When it sees the input device is a pipe file, it’ll exit with an error:
+
+$ echo "this is a pipe input" | docker run -i -t ubuntu cat
+the input device is not a TTY
+$ echo $?
+1
+
+------------------------------------------------------------------------------
+SUMMARY
+
+
+- We’ve learned that the -i option of the docker run command attaches the STDIN of the container to the host process. 
+- Then, we’ve also seen how the -t option enables complete terminal functionality such as echo-off for password masking. 
+- Then, we also simulated the “input device is not a TTY” error by piping the pipe files and specifying the -t option.
