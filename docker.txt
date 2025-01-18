@@ -1,3 +1,27 @@
+# Flask App Dockerfile
+# Which base image to use?
+FROM python:3.11-alpine
+
+# Add metadata for the image
+LABEL maintainer="KBindesh"
+
+# Set the working directory for your app
+WORKDIR /app
+
+# Copy the app source code to working directory
+COPY . .
+
+# Install the dependencies | Run the command while building the image
+RUN pip install -r requirements.txt
+
+# Mention the port on which app container will be listening
+# EXPOSE 8080
+
+# ENTRYPOINT ["python"]
+
+# Command to run when container starts
+CMD ["python", "src/app.py"]
+-------------------------------------------------------------------
 docker build -t image1 .
 docker run -it --name container -p 4000:8080 image1
 
