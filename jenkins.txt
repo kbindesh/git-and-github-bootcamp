@@ -123,8 +123,115 @@ Lab-XX - Compile & Build maven application using Jenkins with Github webhook
 Lab-XX - Sending Email notification with Jenkins
 -------------------------------------------------
 
-Lab-XX - Static code Analysis with SonarQube
--------------------------------------------------
+Lab-XX - Static code Analysis with SonarQube (locally)
+------------------------------------------------------
+- To download  SonarQube locally, navigate to https://www.sonarsource.com/products/sonarqube/downloads/ >> COMMUNITY EDITION >> download only
+
+- Set environment variables
+  SONAR_HOME : C:\Program Files\sonarqube-10.5.1.90531\sonarqube-10.5.1.90531
+  SONAR_JAVA_PATH : C:\Program Files\Java\jdk-17\bin\java.exe
+
+  Path : ADD >> C:\Program Files\sonarqube-10.5.1.90531\sonarqube-10.5.1.90531\bin\windows-x86-64
+  
+- Start the SonarQube service
+  C:\binaries\sonarqube-25.1.0.102122\bin\windows-x86-64 >> StartSonar.bat
+
+- Access the SonarQube tool locally
+  - Navigate to browser >> localhost:9000
+  - Enter credentials - Username: admin | Password: admin
+
+- Update the pom.xml file dependencies for SonarQube
+  [https://mvnrepository.com/artifact/org.sonarsource.scanner.maven/sonar-maven-plugin/5.0.0.4389]
+
+  <dependency>
+      <groupId>org.sonarsource.scanner.maven</groupId>
+      <artifactId>sonar-maven-plugin</artifactId>
+      <version>5.0.0.4389</version>
+  </dependency>
+
+- Execute the Maven project
+  mvn test sonar:sonar -D sonar.login=admin -D sonar.password=<your_password>
+
+- (optional) Create sonar-project.properties
+  
+
+- Understand CODE COVERAGE | Add jacoco plugin to pom.xml
+
+# INTEGRATING MAVEN PROJECT+SONARQUBE WITH JENKINS
+--------------------------------------------------
+
+- Push the source code to github repo
+
+  A Hello World!” sample written in Java using Maven for the build, that showcases a few very simple tests.
+
+  This example demonstrates:
+
+  A simple Java17 application with tests
+  Unit tests written with JUnit 5
+  Code coverage reports via JaCoCo
+  A Maven build that puts it all together
+
+- Running the tests
+  - To run the unit tests, call mvn test
+  - To run the integration tests as well, call mvn verify
+  - Code coverage reports are generated when mvn verify (or a full mvn clean install) is called. 
+  - Point a browser at the output in target/site/jacoco-both/index.html to see the report.
+
+- Unit test
+  - resides in: src/test/java/*Test.java
+  - executes in Maven phase: test
+  - handled by Maven plugin: surefire
+
+Lab-XX - SonarQube Cloud integration with Jenkins
+---------------------------------------------------------------------------------------
+
+- Pre-requisites
+  Jenkins Server with Maven
+
+- Create an account https://sonarcloud.io >> Sign up >> with Github credentials
+
+- Generate SonarCloud token - Account >> My Account >> Security >> Generate token
+
+- Store the SonarCloud token on Jenkins server - Manage Jenkins >> Credentials >> Secret text >>
+  ID: sonar-creds
+  Secret: <token_here>
+
+- Download and install "SonarQube scanner" plugins on Jenkins server
+
+- Add SonarQube server info to Jenkins server
+  Manage Jenkins >> System >> SonarQube Servers >> Add SonarQube >> 
+    Name: sonarqube-server
+    Server URL: https://sonarcloud.io/
+    Server Authentication token: sonar-creds
+
+- Install SonarScanner on Jenkins server
+  Manage Jenkins >> Tools >> SonarQube Scanner >> Add SonarQube Scanner >>
+    Name: sonar-scanner
+    Install automatically: enable
+
+- Create a SonarQube Organization and Project
+  - Create org manually | Plan: Free
+  - Create Project | Name | Project-key | Project-visibility: Public
+  - Access the project info from the Information section
+  
+- Create sonar-project.properties
+  [Add the values as per above created project & org] 
+
+sonar.verbose=true
+sonar.projectKey=prject_key
+sonar.organization=project_org
+sonar.projectName=project_name
+sonar.language=java
+sonar.sourceEncoding=UTF-8
+sonar.sources=.
+sonar.java.binaries=target/classes
+sonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+
+
+- Add SonarQube stage to the Jenkinsfile
+
+search Jenkins extension for SonarQube >> https://docs.sonarsource.com/sonarqube-server/latest/analyzing-source-code/scanners/jenkins-extension-sonarqube/
+
 
 Lab-XX - Java App deployment on Apache Tomcat server | Integrating Jenkins with Tomcat
 ---------------------------------------------------------------------------------------
