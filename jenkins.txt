@@ -232,6 +232,48 @@ sonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
 
 search Jenkins extension for SonarQube >> https://docs.sonarsource.com/sonarqube-server/latest/analyzing-source-code/scanners/jenkins-extension-sonarqube/
 
+pipeline {
+    agent any
+
+    environment {
+      package_name = 'webapp_package'
+    }
+
+    tools {
+      maven 'Maven-3.9.8'
+      jdk 'Java-17'
+    }
+
+    stages {
+        stage("Pulling the Code from SCM"){ 
+            steps { 
+                echo "Cloning the code"
+                git url: 'https://github.com/kbindesh/mvn-lab-project.git', branch: 'main'
+            }   
+        }       
+        stage('Clear previous builds') { 
+            steps {
+              sh 'mvn clean'
+            }
+        }
+        stage('Perform Unit Testing'){
+          steps {
+            sh 'mvn test'
+          }
+        }
+        stage('Compile and Build the App'){
+          steps {
+            sh 'mvn package'
+          }
+        }
+        stage('SonarCloud analysis') {
+          steps{
+            withSonarQubeEnv(credentialsId: 'sonarqube-token', installationName: 'sonarcloud') {
+              sh 'mvn org.sonarsource.scanner.maven:sonar-maven-plugin:3.11.0.3922:sonar'
+            }
+          }
+        }
+    }
 
 Lab-XX - Java App deployment on Apache Tomcat server | Integrating Jenkins with Tomcat
 ---------------------------------------------------------------------------------------
