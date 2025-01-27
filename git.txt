@@ -1,0 +1,50 @@
+GIT FETCH
+--------------
+1) Let us create a file called demo.txt
+   
+git init
+git add <Filename>
+git commit -m <Commit Message
+git remote add origin <Link to your remote repository>
+git push origin <branch name>
+
+Now, we have my demo.txt in the remote repository. 
+
+
+2) The local and the remote repositories are now in sync.
+
+- Let’s now update our demo.txt in the remote repository(github).
+
+3) Now since we have updated our demo.txt remotely, let’s bring the changes to our local repository.
+
+Let’s use the git fetch command to see in the local repository whether we have a change in the remote repository or not.
+
+git log
+
+git fetch
+
+4) To merge these changes into our local repository, we need to use command:
+
+git merge origin/master 
+
+- Let us have a look at our commits in the local repository using the git log command.
+And we got our remote repository commit in our local repository. 
+
+============================================================
+GIT PULL 
+
+- Git Pull command is used to fetch all changes from the remote repository to the current working directory. 
+
+- It automatically try to merge or rebase them into our current working directory. 
+- It is the combination of git fetch and git merge 
+
+1) Let’s make more changes to our demo.txt file at the remote repository.
+
+2) Now, we have 3 commits at our remote repository whereas 2 commits at our local repository. 
+
+3) Let us now bring this change to our local repository using the git pull origin <branch name> command.
+
+- We can see that with the help of just git pull command, we directly fetched and merged our remote repository with the local repository.
+
+4) Let us see what our demo.txt in the local repository looks like –
+
