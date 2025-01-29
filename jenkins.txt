@@ -290,3 +290,98 @@ JENKINS PIPELINES
 - Multi-branch Pipeline
 
 Scenario: There are 3 jobs namely Build job, Test Job, Deployment job
+
+
+--------------------------------------
+# Setup JENKINS server with MAVEN
+--------------------------------------
+
+cd /opt
+wget https://dlcdn.apache.org/maven/maven-3/3.9.8/binaries/apache-maven-3.9.8-bin.tar.gz
+tar -xvzf apache-maven-3.9.8-bin.tar.gz
+vi ~/.bash_profile
+JAVA_HOME=/usr/lib/jvm/java-17-amazon-corretto.x86_64
+M2_HOME=/opt/apache-maven-3.9.8
+M2=/opt/apache-maven-3.9.8/bin
+
+PATH=$PATH:$HOME/bin:$JAVA_HOME:$M2_HOME:$M2
+
+source ~/.bash_profile
+
+# Install Plugins
+
+- Maven Integration
+- Maven Invoker
+- Pipeline Stage View
+
+# Add the location of Java and Maven app on jenkins server
+
+Java-17 - /usr/lib/jvm/java-17-amazon-corretto.x86_64
+Maven-3.9.8 - /opt/apache-maven-3.9.8
+
+--------------------------------------
+# Setup NEXUS server - 8081
+--------------------------------------
+
+sudo su -
+yum install -y java-17-amazon-corretto.x86_64
+
+mkdir /app && cd /app
+
+# https://help.sonatype.com/en/download.html
+wget https://download.sonatype.com/nexus/3/nexus-3.76.1-01-unix.tar.gz
+tar -xvf nexus-3.76.1-01-unix.tar.gz
+
+mv nexus-3.76.1-01 nexus
+
+adduser nexus
+
+# Check ownership of both the dirs.
+getfacl nexus-3.76.1-01
+
+# Now change the ownership
+chown -R nexus:nexus /app/nexus
+chown -R nexus:nexus /app/sonatype-work
+
+# Update the file - /app/nexus/bin/nexus.rc
+
+cd nexus/bin
+vi nexus.rc
+  - run_as_user="nexus"
+
+# Change the default nexus data directory
+- If you want to change the default nexus data directory, open the nexus properties file and change the data directory -Dkaraf.data parameter to a preferred location as shown below. 
+- If you don’t specify anything, by default nexus data directory will be set to /app/sonatype-work/nexus3
+
+# Running Nexus as a System Service
+
+sudo vi /etc/systemd/system/nexus.service
+
+[Unit]
+Description=nexus service
+After=network.target
+
+[Service]
+Type=forking
+LimitNOFILE=65536
+User=nexus
+Group=nexus
+ExecStart=/app/nexus/bin/nexus start
+ExecStop=/app/nexus/bin/nexus stop
+User=nexus
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target
+
+# Execute the following command to add nexus service to boot.
+chkconfig nexus on
+
+# Start nexus service
+systemctl start nexus
+
+# To check the nexus service
+netstat -plunt | grep 8081
+ps axu | grep -i java
+
+
