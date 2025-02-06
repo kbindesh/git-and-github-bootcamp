@@ -1,3 +1,76 @@
+# DOCKER NETWORKING
+==========================================================================
+USING BRIDGE NETWORKS
+--------------------------------------------------------------------------
+1) Creating Networks
+   - To create a new network, use the docker network create command. 
+   - You can specify the driver to use, such as bridge or host, by setting the "-d" flag. 
+   - By default bridge network will be created if you omit the flag.
+
+docker network create app-network -d bridge
+
+2) Connecting Containers to Networks
+   - You can attach new containers to a network by setting the --network flag with your docker run command.
+
+docker run -it --rm --name bincontainer --network app-network busybox:latest
+
+3) Next, start another container, this time without the --network flag (will go in default bridge network):
+docker run -it --rm --name container2 busybox:latest
+
+4) Now try communicating between the two containers, using their names:
+# get inside container1
+/ # ping container2
+ping: bad address 'container2'
+
+- The containers aren’t in the same network, so they can’t directly communicate with each other.
+
+5) Join container2 to the same network as container1
+
+docker network connect app-network container2
+
+- The containers now share a network, which allows them to discover each other:
+# in container1
+/ # ping container2
+PING container2 (172.22.0.3): 56 data bytes
+64 bytes from 172.22.0.3: seq=0 ttl=64 time=4.205 ms
+----------------------------------------------------------------------------
+USING HOST NETWORKS
+----------------------------------------------------------------------------
+- You can enable host networking for a container by connecting it to the built-in host network:
+
+docker run -d --name nginx --network host nginx:latest
+
+- NGINX listens on port 80 by default. 
+- Because the container's using a host network, you can access your NGINX server on your host's localhost:80 outside the container, even though no ports have been explicitly specified.
+
+- To test: curl localhost:80
+
+----------------------------------------------------------------------------
+REMOVING CONTAINERS FROM THE NETWORKS
+----------------------------------------------------------------------------
+docker network disconnect demo-network container2
+
+----------------------------------------------------------------------------
+MANAGING NETWORKS
+----------------------------------------------------------------------------
+- docker network ls
+- docker network rm <network-name> - To delete a network, disconnect or stop all the Docker containers that are assciated with it.
+- docker network prune - automatically delete all unused networks using the network prune
+
+
+----------------------------------------------------------------------------
+DISABLING NETWORKS
+----------------------------------------------------------------------------
+- When a container's networking is disabled, it will have no connectivity available – either to other containers, or your wider network. 
+- Disable networking by attaching your container to the none network.
+- This lets you easily sandbox unknown services.
+
+docker run -it --rm --network none busybox:latest
+
+
+
+============================================================================
+
 # Flask App Dockerfile
 # Which base image to use?
 FROM python:3.11-alpine
