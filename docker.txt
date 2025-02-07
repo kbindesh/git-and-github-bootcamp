@@ -1,3 +1,55 @@
+# DOCKER STORAGE
+==========================================================================
+docker volume create <volume_name>
+docker volume create datavolume
+docker volume ls
+docker volume inspect datavolume
+
+# Mounting a volume on Container
+--------------------------------
+docker container run -it --name container2 -v datavolume:/data alpine /bin/sh
+
+# Inside the container, we can now create files in the /data folder
+/ # cd /data
+/ # echo "Some app code" > Code-01.txt
+/ # echo "Some more code" > Code-02.txt
+
+Now, Delete the Container with Volume mounted on it
+docker container rm container2
+
+Create a new Container and mount the Volume created in Step#1 on it
+docker container run --name container4 -it --rm -v datavolume:/app/data \
+centos:7 /bin/bash
+
+cd /app/data
+ls –l
+
+# As expected, we should see the two files create in step#2
+Code-01.txt
+Code-02.txt
+---------------------------------------------------
+# Sharing Data between containers using Docker Volumes
+
+# Create a container and mount a volume on it | Default volume mode: R/W
+docker container run -it --name ContainerWithRWVolume -v shared-data:/data .alpine /bin/sh
+
+# Create a new file inside the container (on mounted volume)
+/ echo "New file present in docker volume" > /data/test-file.txt
+
+# Now, exit from the container by pressing Ctrl+D or exit
+
+# Create another container, say ContainerWithROVolume and mount a volume in Read Only mode
+docker container run -it --name ContainerWithROVolume -v shared-data:/app/data:ro ubuntu:22.04 /bin/bash
+
+# Check in the container if you can see the file created in the ContainerWithRWVolume container
+ls -l /app/data
+
+# Now, try to create a new file on the mounted volume
+/ echo "New file for read only volume" > /app/data/test-file-2.txt
+
+# It will fail with the following message:
+bash: /app/data/test-file-2.txt: Read-only file system
+
 # DOCKER NETWORKING
 ==========================================================================
 USING BRIDGE NETWORKS
