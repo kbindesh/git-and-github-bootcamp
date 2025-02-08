@@ -1,0 +1,32 @@
+Understanding pods
+=====================
+You can create a pod using an imperative command as follows:  
+kubectl run <pod-name> --image=<image-name:image-tag>
+
+kubectl run nginx-pod --image=nginx:alpine
+
+kubectl describe pod nginx-pod
+--------------------------------------------------
+apiVersion: v1
+kind: Pod
+metadata:
+name: nginx
+spec:
+containers:
+- name: nginx
+image: nginx:alpine
+ports:
+- containerPort: 80
+
+kubectl apply -f <your-spec>.yaml
+--------------------------------------------------
+Similarly, we can run a BusyBox image with a single command, such as the following:  
+kubectl run busybox --rm -it --image=busybox /bin/sh
+
+---------------------------------------------------
+Understanding a multi-container pod
+
+=====================================================
+Deploying and managing applications
+=====================================================
+
