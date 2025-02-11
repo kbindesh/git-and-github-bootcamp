@@ -56,6 +56,56 @@ bash: /app/data/test-file-2.txt: Read-only file system
 ==========================================================================
 USING BRIDGE NETWORKS - bridge
 --------------------------------------------------------------------------
+docker network ls
+docker network inspect bridge
+docker network create --driver bridge sample-net
+docker network create --driver bridge --subnet "10.1.0.0/16" testnet
+docker network inspect sample-net | grep Subnet
+docker network rm sample-net
+docker network prune --force
+--------------------------------------------------------------------------
+
+// Create a network without specifying network - for bridge n/w
+docker container run --name c1 -it --rm alpine:latest /bin/sh
+docker container inspect c1
+docker container exec c1 /bin/sh
+ip addr
+ip addr show eth0 - we can also see what MAC address and what IP have been associated with this container network namespace by Docker.
+ip route
+
+docker container run --name c2 -d --rm alpine:latest ping 127.0.0.1
+docker container inspect --format "{{.NetworkSettings.IPAddress}}" c2
+
+
+# Now, let’s create two additional containers, c3 and c4, and attach them to sample-net, which we
+created earlier. For this, we’ll use the --network parameter
+
+docker container run --name c3 --rm -d \
+--network sample-net \
+alpine:latest ping 127.0.0.1
+
+docker container run --name c4 --rm -d \
+--network sample-net \
+alpine:latest ping 127.0.0.1
+
+docker network inspect sample-net
+
+# whether the c3 and c4 containers can freely communicate with each other?
+- To demonstrate that this is indeed the case, we can exec into the c3 container:
+
+$ docker container exec -it c3 /bin/sh
+/ # ping c4
+
+Instead of the container name, here, we use c4’s IP address:
+/ # ping 172.20.0.3
+
+We should get this output:
+PING c4 (172.20.0.3): 56 data bytes
+64 bytes from 172.20.0.3: seq=0 ttl=64 time=3.092 ms
+64 bytes from 172.20.0.3: seq=1 ttl=64 time=0.481 ms
+--------------------------------------------------------------------------
+docker network inspect bridge
+--------------------------------------------------------------------------
 1) Creating Networks
    - To create a new network, use the docker network create command. 
    - You can specify the driver to use, such as bridge or host, by setting the "-d" flag. 
@@ -91,6 +141,9 @@ PING container2 (172.22.0.3): 56 data bytes
 ----------------------------------------------------------------------------
 # USING HOST NETWORKS
 ----------------------------------------------------------------------------
+Example-01
+-------------
+
 - You can enable host networking for a container by connecting it to the built-in host network:
 
 docker run -d --name nginx --network host nginx:latest
@@ -100,6 +153,28 @@ docker run -d --name nginx --network host nginx:latest
 
 - To test: curl localhost:80
 
+Example-02
+----------
+# Run an Alpine container and attach it to the host network
+$ docker container run --rm -it --network host alpine:latest /bin/sh
+/ # ip addr show eth0
+
+[can see that 192.168.65.3 is the IP address that the host has been assigned and
+that the MAC address shown here also corresponds to that of the host.]
+
+We can also inspect the routes:
+/ # ip route
+
+----------------------------------------------------------------------------
+# USING NULL NETWORKS
+----------------------------------------------------------------------------
+$ docker container run --rm -it --network none alpine:latest /bin/sh
+
+/ # ip addr show eth0
+ip: can't find device 'eth0'
+
+/ # ip route
+This returns nothing.
 ----------------------------------------------------------------------------
 REMOVING CONTAINERS FROM THE NETWORKS
 ----------------------------------------------------------------------------
