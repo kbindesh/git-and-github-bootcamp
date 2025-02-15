@@ -83,19 +83,93 @@ https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/
 =====================================================
 Deploying and managing applications
 =====================================================
+# Replicasets
+-------------
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+name: frontend
+labels:
+app: melonapp-rs
+spec:
+replicas: 3
+selector:
+matchLabels:
+app: melonapp-rs
+template:
+metadata:
+labels:
+app: melonapp-rs
+spec:
+containers:
+- name: nginx
+image: nginx
 
+kubectl get replicaset
 
+Once the ReplicaSet is deployed, update the number of ReplicaSets by using the following command:
+kubectl scale replicaset frontend --replicas=6
 
+Alternatively, you can specify it in a YAML definition with the following command:
+kubectl scale --replicas=6 -f replicas.yaml
 
+kubectl delete replicaset frontend
 
+=========================================
+Workload scheduling
+=========================================
+Understanding namespaces
 
+kubectl get namespaces
 
+When you define a pod or any namespaced Kubernetes object, you can specify the namespace in the
+YAML definition as follows:
 
+apiVersion: v1
+kind: Pod
+metadata:
+  name: k8s-ns-pod
+  namespace: k8s-ns
+  labels:
+    app: k8sapp
+spec:
+  containers:
+  - name: k8sapp-container
+    image: busybox
+    command: ['sh', '-c', 'echo Salut K8S! && sleep 3600']
 
+# If you create that pod and specify the namespace that the pod belongs to, you can add the -n flag
+when querying this pod using the kubectl get pods command:
 
+kubectl get pods -n k8s-ns
 
+# Similarly, if the pod has been created in that namespace, you can use the following command to
+check it out:
+kubectl describe pod k8s-ms-pod -n k8s-ns
 
+# In the case that the pods are not in the default namespace, you don’t have to specify the namespace
+option anymore. In the following example, you want to set a namespace named dev, and then use
+the kubectl get command without the -n flag:
 
+kubectl config set-context &(kubectl config current-context)
+--namespace=dev
+
+====================================================
+Labels, node selectors, and annotations
+====================================================
+- Labels, selectors, and annotations are useful notions when it comes to workload scheduling. Labels are key-value pairs attached to Kubernetes objects that can be listed in the metadata.labels section of an object descriptor. 
+- Selectors are used for identifying and selecting a group of objects using their labels. 
+
+- See the following examples of some quality-based selectors:
+
+kubectl get pods -l app=my-app
+kubectl get pods -l environment=production
+
+# When it comes to inequality, you can use the following:
+kubectl get pods -l environment!=production
+
+# You can start by labeling the worker nodes using the following command:
+kubectl label node cloudmelonplayground env=dev
 
 =====================================================
 Understanding Job and CronJob objects
