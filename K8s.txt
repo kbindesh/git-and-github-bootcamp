@@ -171,55 +171,49 @@ kubectl get pods -l environment!=production
 # You can start by labeling the worker nodes using the following command:
 kubectl label node cloudmelonplayground env=dev
 
-=====================================================
-Understanding Job and CronJob objects
-=====================================================
-- Jobs can be used to reliably execute a workload and define when it completes – typically, a Job will
-create one or more pods. 
-- After the Job is finished, the containers will exit and the pods will enter the
-Completed status.
+========================================================
+SERVICES
+========================================================
+Kubernetes treats Pods as ephemeral objects and deletes them when any of the following
+events occur:
+• Scale-down operations
+• Rolling updates
+• Rollbacks
+• Failures
 
-apiVersion: batch/v1
-kind: Job
-  metadata:
-    name: pi
-spec:
-  template:
-    spec:
-    containers:
-      - name: pi
-        image: perl
-        command: ["perl", "-Mbignum=bpi", "-wle", "print bpi(2000)"]
-    restartPolicy: Never
-  backoffLimit: 4
+This means they’re unreliable, and apps can’t rely on them being there to respond to
+requests. Fortunately, Kubernetes has a solution — Service objects sit in front of one or
+more identical Pods and expose them via a reliable DNS name, IP address, and port.
 
-- The backoffLimit parameter means that, if it fails 4 times, this is the limit. 
-- All the Job does
-the same as it is while creating a pod under the hood. 
-- Although a normal pod is constantly running, when a Job is complete, it goes into the Completed status. 
-- This means that the container is no longer running, so the pod still exists, but the container is complete.
+- Every Service has a front end and a back end. 
+- The front end includes a DNS name, IP address, and network port that Kubernetes guarantees will never change. 
+- The back end is a label selector that sends traffic to healthy Pods with matching labels.
 
-------------------------------------------------------------------
-# CronJobs
--------------------------------------------------------------------
-CronJobs, based on the capability of a Job, add value by allowing users to execute Jobs on a schedule.
-Users can use cron expressions to define a particular schedule as per their requirements.
+Example for exmplaining service
 
-apiVersion: batch/v1
-kind: CronJob
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-name: hello
+  name: bin-2024
 spec:
-schedule: "*/1 * * * *"
-jobTemplate:
+  replicas: 10
+  <Snip>
+  template:
+    metadata:
+      labels:
+      project: tkb <<==== Create Pods with these labels
+      zone: prod <<==== Create Pods with these labels
+    spec:
+      containers:
+  <Snip>
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tkb
 spec:
-template:
-spec:
-containers:
-- name: hello
-image: busybox
-args:
-- /bin/sh
-- -c
-- date; echo Hello from the Kubernetes cluster
-restartPolicy: OnFailure
+  ports:
+    - port: 8080
+  selector:
+    project: tkb <<==== Send to Pods with these labels
+    zone: prod <<==== Send to Pods with these labels
