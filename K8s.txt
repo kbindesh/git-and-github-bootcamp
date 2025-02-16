@@ -217,3 +217,48 @@ spec:
   selector:
     project: tkb <<==== Send to Pods with these labels
     zone: prod <<==== Send to Pods with these labels
+
+
+==================================================================
+Service types
+Kubernetes has several types of Services for different use cases and requirements. The
+major ones are:
+• ClusterIP
+• NodePort
+• LoadBalancer
+
+===================================================================
+NodePort
+===================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: skippy <<==== Registered with the internal cluster DNS (ClusterIP)
+spec:
+  type: NodePort <<==== Service type
+  ports:
+  - port: 8080 <<==== ClusterIP port
+    targetPort: 9000 <<==== Application port in container
+    nodePort: 30050 <<==== External port on every cluster node (NodePort)
+  selector:
+    app: hello-world
+
+kubectl describe svc svc-test
+[Endpoints: 10.1.0.200:8080,10.1.0.201:8080,10.1.0.202:808]
+====================================================================
+Loadbalancer
+====================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: lb <<==== Registered with cluster DNS
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 8080 <<==== Load balancer port
+    targetPort: 9000 <<==== Application port inside container
+  selector:
+    project: tkb
+
+kubectl describe svc svc-test
+[Endpoints: 10.1.0.200:8080,10.1.0.201:8080,10.1.0.202:808]
