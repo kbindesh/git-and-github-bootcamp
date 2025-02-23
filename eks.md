@@ -47,6 +47,109 @@ kubectl get ns - 4 namespaces will be there
 
 kubectl get pods
 
+kubectl get all
+
 # List all the resources present in kube-system
 kubectl get all -n kube-system
 ```
+
+## Service
+
+- ClusterIP
+- NodePort
+- LoadBalancer
+- ExternalName
+  
+### Lab: Deploy sample application - 2 deployments, 1 clusterip svc, 1 nodeport svc 
+
+- **Nginx Application Deployment**
+
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+spec:
+selector:
+  matchLabels:
+    app: nginx
+replicas: 2
+template:
+  metadata:
+    labels:
+      app: nginx
+  spec:
+    containers:
+      - name: nginx
+        image: nginx
+        ports:
+          - containerPort: 80
+```
+
+- **ClusterIP Service for the above Pods**
+
+```
+apiVersion: v1
+kind: Service
+metadata:
+  name: bin-cip-service
+spec:
+  type: ClusterIP
+  selector:
+    app: nginx
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 80
+```
+
+## STORAGE MANAGEMENT
+
+- emptyDir
+
+```
+apiVersion: v1
+kind: Pod
+metadata:
+  name: emptydir-vol-pod
+spec:
+  restartPolicy: Never
+  volumes:
+  - name: shared-data
+    emptyDir: {}
+  containers:
+  - name: busybox-container
+    image: busybox
+    command: ["/bin/sh","-c","while true; do sleep 3600; done"]
+    volumeMounts:
+    - name: shared-data
+      mountPath: /tmp/data
+  - name: nginx-container
+    image: nginx
+    volumeMounts:
+    - name: shared-data
+      mountPath: /data
+```
+
+- CSI ephemeral storage
+
+```
+kind: Pod
+apiVersion: v1
+metadata:
+  name: my-csi-pod
+spec:
+containers:
+- name: my-frontend
+  image: busybox
+  volumeMounts:
+  - mountPath: "/data"
+    name: my-csi-vol
+  command: ["sleep", "1000000"]
+  volumes:
+  - name: my-csi-vol
+    csi:
+      driver: inline.storage.kubernetes.io
+      volumeAttributes:
+        foo: bar
+```  
