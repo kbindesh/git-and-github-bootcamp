@@ -1,4 +1,4 @@
-ANSIBLE CONTROLLER - 22
+ANSIBLE CONTROLLER
 =====================
 sudo su -
 vi /etc/hostname     - ansible-controller
@@ -98,8 +98,242 @@ ssh-copy-id <private_ip _of_client_node>
 # To verify the connectivity
 ansible all -m ping
 
+ANSIBLE ADHOC COMMANDS
+========================
+ansible localhost -m debug -a "msg='Hello there'"
+
+ansible localhost -m command -a "uname"
+ansible localhost -m command -a "uptime"
+ansible localhost -m command -a "free -mh"
+ansible localhost -m command -a "hostname"
+
+ansible localhost -m shell -a "uname; hostname"
 
 
+EXECUTING TASKS ON REMOTE MACHINE USING ANSIBLE ADHOC CMDS
+===========================================================
+mkdir ansible-project
+cd ansible-project
+
+# Create Inventory file with remote machine info
+-------------------------------------------------
+localhost ansible_connection=local
+webserver ansible_host=172.31.90.137 ansible_port=22 anisble_user=ec2-user ansible_connection=ssh ansible_ssh_private_key_file=/home/ec2-user/ansible-project/key.pem
+
+# Create key.pem file
+----------------------
+
+# Now, execute tasks on remote machine (webserver)
+-----------------------------------------------------
+
+ansible webserver -m yum -a "name='git' state='latest'" -i hosts.ini -b
+yum list installed | grep git*
+
+ansible webserver -m yum -a "name='git' state='absent' autoremove=yes" -i hosts.ini -b
+yum list installed | grep git*
+
+# Service Module
+----------------
+
+
+# File Management Modules - file, stat, copy, lineinfile, blockinfile, template, fetch
+----------------------------------------------------------------------------------------
+
+# ASSIGNMENT - CONFIGURE JENKINS SERVER USING ANSIBLE
+======================================================
+
+ansible <client> -m get_url -a "url='https://pkg.jenkins.io/redhat-stable/jenkins.repo' dest='/etc/yum.repos.d/jenkins.repo'" -i hosts.ini -b
+
+ansible <client> -m shell -a "rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key" -i hosts.ini -b
+
+ansible <client> -m yum -a "name='java-17-amazon-corretto.x86_64' state='present'" -i hosts.ini -b
+
+ansible <client> -m yum -a "name='jenkins' state='present'" -i hosts.ini -b
+
+ansible <client> -m service -a "name='jenkins' state='started'" -i hosts.ini -b
+
+
+=================================
+INTRODUCTION TO ANSIBLE PLAYBOOK
+=================================
+
+# Controlling where to run the task ?
+
+- localhost
+- server
+- group of servers
+- all 
+
+# Print a message
+-------------------
+
+---
+- name: debug module demo
+  hosts: localhost
+  tasks:
+    - name: debug module
+      ansible.builtin.debug:
+        msg: hello
+
+# Run a playbook
+-------------------
+ansible-playbook <playbook_name> -i hosts.ini
+
+
+# Ansible task execution Status
+---------------------------------
+- ok
+- changed
+- failed
+- unreachable
+- ignored
+- skipped
+
+ 
+# Ping a remote machine to check connectivity
+----------------------------------------------
+---
+- name: Connectivity Testing
+  hosts: all
+  tasks:
+    - name: ping test 
+      ansible.builtin.ping:
+
+# Variables in Ansible
+-----------------------
+- How to pass variable to Ansible playbooks?
+
+There are multiple ways to pass variables to Ansible playbooks:
+
+--extra-vars "greeting=hello"
+--extra-vars '{"greeting":"hello"}'
+--extra-vars "@file.json"
+--extra-vars "@file.yml"
+vars_files attribute in playbook
+
+# Print a variable value during execution
+-------------------------------------------
+
+---
+- name: debug module demo
+  hosts: localhost
+  vars:
+    greeting: "Ansible"
+  tasks:
+    - name: debug module
+      ansible.builtin.debug:
+        msg: "Hello, from {{ greeting }}"
+
+
+# Run the playbook by passing new variable value
+--------------------------------------------------
+
+- Pass variable to playbook using #1 method
+
+ansible-playbook --extra-vars="greeting=Hi" <playbook_name>.yml -i hosts.ini
+
+
+----------------------------------------------------
+Limiting playbooks to particular hosts and groups
+----------------------------------------------------
+
+ansible-playbook playbook.yml --limit webservers
+
+# You could also limit the playbook to one particular host:
+ansible-playbook playbook.yml --limit xyz.example.com
+
+# to see a list of hosts that would be affected by your playbook before you actually run it
+ansible-playbook playbook.yml --list-hosts
+
+
+# Install multiple packages
+------------------------------
+
+---
+- name: Install multiple packages
+  hosts: all
+  tasks: 
+   - name: install 3 packages
+     yum:
+      - httpd
+      - unzip
+      - git
+     state: latest
+
+===================================================
+CONFIGURE A JENKINS SERVER USING ANSIBLE
+===================================================
+---
+- name: Configure Jenkins Server
+  hosts: localhost
+  become: true/yes
+  vars:
+    java_packages:
+      - java-17-amazon-corretto-devel
+    jenkins_packages:
+      - jenkins  
+  tasks:
+    - name: Download Jenkins repository file
+      get_url:
+        url: https://pkg.jenkins.io/redhat-stable/jenkins.repo
+        dest: /etc/yum.repos.d/jenkins.repo
+      become: true
+
+    - name: Import Jenkins-CI key
+      shell: rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
+      become: true
+
+    - name: Install Java
+      yum:
+        name: "{{ java_packages }}"
+        state: present
+      become: true
+
+    - name: Install Jenkins
+      yum:
+        name: "{{ jenkins_packages }}"
+        state: present
+      become: true
+
+    - name: Start Jenkins service
+      service:
+        name: jenkins
+        state: started
+      become: true
+
+===================================================
+CONFIGURE APACHE WEBSERVER USING ANSIBLE
+===================================================
+---
+- name: Configure Apache WebServer
+  hosts: webservers
+  become: yes
+  vars:
+    apache_service: httpd
+
+  tasks:
+    - name: Ensure Apache is installed
+      ansible.builtin.package:
+        name: "{{ apache_service }}"
+        state: present
+
+    - name: Copy a web page.
+      ansible.builtin.copy:
+        content: |
+          <html>
+          <head><title>Hello world!</title></head>
+          <body>Hello world!</body>
+          </html>
+        dest: "/var/www/html/index.html"
+        mode: 0664
+
+    - name: Ensure Apache is running and starts at boot
+      ansible.builtin.service:
+	name: "{{ apache_service }}"
+	state: started
+	enabled: true
+
+===================================================
 CREATE A NEW PLAYBOOK | FOR CREATING USER ON CLIENT
 ===================================================
 
@@ -113,6 +347,7 @@ CREATE A NEW PLAYBOOK | FOR CREATING USER ON CLIENT
         name: Bindesh
          
 
+====================================
 CREATE A PLAYBOOK | INSTALL PACKAGES
 ====================================
 
@@ -140,113 +375,6 @@ CREATE A PLAYBOOK | INSTALL PACKAGES
 
 [switch to client vm and verify the installation]
 [yum list installed | grep httpd]
-
-
-CREATE A PLAYBOOK | FILE MODULE
-===============================
-
----
-- name: Create a file
-  hosts: webservers
-  become: yes
-  tasks:
-    - name: Create a Directory
-      file:
-        path: /home/ansibleadmin/newdir
-        state: directory
-    - name: Create a file
-      file:
-        path: /home/ansibleadmin/newdir/newfile.txt
-        state: touch
-
-CREATE A DIRECTORY + ansible.cfg + hosts - /home/ansibleadmin
-=========================================
-
---------------
-ansible.cfg
---------------
-[defaults]
-
-inventory      = /home/ansibleadmin/ansible-labs/hosts
-deprecation_warnings=False
-system_warnings=False
-command_warnings=False
-interpreter_python=auto_silent
-
-------
-hosts
-------
-
-<private_ip_of_client>
-
-
-============================
-GATHER FACTS
-============================
-
-ansible all -m setup
-
-
----
-- name: Create a file
-  hosts: all
-  gather_facts: no		# HIGHLIGHT THIS 
-  tasks:
-    - name: Create a Directory
-      file:
-        path: /home/ansibleadmin/newdir
-        state: directory
-
-[Execute the above playbook, This won't gather facts]
-
-
-=============================
-CONDITIONAL EXECUTION - WHEN
-=============================
-What if I want to install httpd on Ubuntu and RHEL servers?
-
-Create a playbook for installing package based on Linux distro
-
----
-- name: Install Packages
-  hosts: all
-  become: true
-  tasks:
-    - name: Install HTTPD
-      yum:
-        name: httpd
-        state: latest
-      when: ansible_os_family == "RedHat"
-
-    - name: Install HTTPD on Ubuntu servers
-      apt:
-        name: apache2
-        state: present
-      when: ansible_os_family == "Debian"
-
-
-- name: Uninstall HTTPD
-  hosts: all
-  become: true
-  tasks: 
-    - name: Stop HTTPD service
-      yum:
-        name: httpd
-        state: stopped
-      when: ansible_os_family == "RedHat"
-    - name: Remove HTTPD service
-      yum:
-        name: httpd
-        state: removed
-      when: ansible_os_family == "RedHat"
-    - name: Install HTTPD on Ubuntu servers
-      apt:
-        name: apache2
-        state: stopped
-      when: ansible_os_family == "Debian" 
-
-[to execute it in dryrun mode use --check option]
-
 
 ====================
 LIST and with_items
@@ -308,6 +436,117 @@ LIST and with_items
         - /destination1/myfile.conf
         - /destination2/myfile.conf
         - /destination3/myfile.conf
+
+===============================
+CREATE A PLAYBOOK | FILE MODULE
+===============================
+
+---
+- name: Create a file
+  hosts: webservers
+  become: yes
+  tasks:
+    - name: Create a Directory
+      file:
+        path: /home/ansibleadmin/newdir
+        state: directory
+    - name: Create a file
+      file:
+        path: /home/ansibleadmin/newdir/newfile.txt
+        state: touch
+
+=============================================================
+CREATE A DIRECTORY + ansible.cfg + hosts - /home/ansibleadmin
+=============================================================
+
+--------------
+ansible.cfg
+--------------
+[defaults]
+
+inventory      = /home/ansibleadmin/ansible-labs/hosts
+deprecation_warnings=False
+system_warnings=False
+command_warnings=False
+interpreter_python=auto_silent
+
+------
+hosts
+------
+
+<private_ip_of_client>
+
+
+============================
+GATHER FACTS
+============================
+
+ansible all -m setup
+
+
+---
+- name: Create a file
+  hosts: all
+  gather_facts: no		# HIGHLIGHT THIS 
+  tasks:
+    - name: Create a Directory
+      file:
+        path: /home/ansibleadmin/newdir
+        state: directory
+
+[Execute the above playbook, This won't gather facts]
+
+
+=============================
+CONDITIONAL EXECUTION - WHEN
+=============================
+
+
+What if I want to install httpd on Ubuntu and RHEL servers?
+
+Create a playbook for installing package based on Linux distro
+
+---
+- name: Install Packages
+  hosts: all
+  become: true
+  tasks:
+    - name: Install HTTPD
+      yum:
+        name: httpd
+        state: latest
+      when: ansible_os_family == "RedHat"
+
+    - name: Install HTTPD on Ubuntu servers
+      apt:
+        name: apache2
+        state: present
+      when: ansible_os_family == "Debian"
+
+
+- name: Uninstall HTTPD
+  hosts: all
+  become: true
+  tasks: 
+    - name: Stop HTTPD service
+      yum:
+        name: httpd
+        state: stopped
+      when: ansible_os_family == "RedHat"
+    - name: Remove HTTPD service
+      yum:
+        name: httpd
+        state: removed
+      when: ansible_os_family == "RedHat"
+    - name: Install HTTPD on Ubuntu servers
+      apt:
+        name: apache2
+        state: stopped
+      when: ansible_os_family == "Debian" 
+
+[to execute it in dryrun mode use --check option]
+
+
 
 ==================================
 Variables
@@ -382,7 +621,6 @@ Arithmetic Operators - + - / *
 Comparison Operators ==, !=, < > >= <= | for string ==, !=
 Membership operators in, not in
  
-
 ==========================================================
 HANDLERS
 ==========================================================
@@ -425,10 +663,12 @@ Conditional statements
 Handlers
 Roles
 CICD Integration
-==========================================================
-Facts & Systemd facts
-Variables - variables, register, setfact, operations on variables
-Conditional statements
-Handlers
-Roles
-CICD Integration
+
+
+
+
+If certain tasks need to be run with sudo privileges, you can add become:
+yes to the task, and either run the playbook with --ask-sudo-pass (in
+which case, Ansible will prompt you for your sudo password before
+running the playbook) or run the playbook normally, and wait for Ansible
+to prompt you for your sudo password.
