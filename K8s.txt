@@ -261,4 +261,160 @@ spec:
     project: tkb
 
 kubectl describe svc svc-test
-[Endpoints: 10.1.0.200:8080,10.1.0.201:8080,10.1.0.202:808]
+[Endpoints: 10.1.0.200:8080,10.1.0.201:8080,10.1.0.202:8080]
+
+
+===================================================================
+KUBERNETES SECURITY
+===================================================================
+kubectl get roles -A
+kubectl get rolesbindings -A
+
+
+https://kubernetes.io/docs/reference/access-authn-authz/rbac/
+
+Kubernetes allows you to configure custom roles or use default user-facing roles, including, but not limited to:
+
+1. Cluster-admin: 
+ - This “superuser” can perform any action on any resource in a cluster. 
+ - You can use this in a ClusterRoleBinding to grant full control over every resource in the cluster (and in all namespaces) or in a RoleBinding to grant full control over every resource in the respective namespace.
+2. Admin: 
+ - This role permits unlimited read/write access to resources within a namespace. 
+ - This role can create roles and role bindings within a particular namespace. It does not permit write access to the namespace itself.
+3. Edit: This role grants read/write access within a given Kubernetes namespace. 
+   - It cannot view or modify roles or role bindings. 
+4. View: This role allows read-only access within a given namespace. 
+   - It does not allow viewing or modifying of roles or role bindings. 
+
+
+# Creating roles for users per user type
+===========================================
+As an example, let’s say your organization needs roles for three different user types: 
+1. infrastructure monitoring team members - you could configure a Role that gives read-only access (using the verbs “get,” “list” and “watch”) to a given namespace.
+2. established developers - 
+3. cluster admins - And admin could map new developers, who are still getting the hang of things, or anyone else who needs read-only access, to this Role.
+
+# READ-ONLY ROLE for infrastructure monitoring users
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: read-only
+  namespace: default
+rules:
+- apiGroups:
+  - ""
+  resources: ["*"]
+  verbs:
+  - get
+  - list
+  - watch
+
+To apply the Role to a user, you must define a RoleBinding. 
+This will give the user access to all resources within the namespace with the permissions defined in the Role configuration above:
+
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: RoleBinding
+metadata:
+  name: read-only-binding
+roleRef:
+  kind: Role
+  name: read-only #The role name you defined in the Role configuration
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+– kind: User
+  name: example #The name of the user to give the role to
+  apiGroup: rbac.authorization.k8s.io
+
+
+# READ-WRITE ROLE FOR DEVELOPERS
+
+Before creating a role, create a dedicated namespace for developers "dev"
+
+Likewise, a Role for developers who need not just the read-access rights from the example above, but also write-access, to a certain namespace (“dev” in this example) would look as follows:
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+ name: read-write
+ namespace: dev
+rules:
+- apiGroups:
+ - ""
+ resources: ["*"]
+ verbs:
+ - get
+ - list
+ - watch
+ - create
+ - update
+ - patch
+ - delete
+
+The associated RoleBinding would look like:
+
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: RoleBinding
+metadata:
+ name: read-write-binding
+roleRef:
+ kind: Role
+ name: read-write
+ apiGroup: rbac.authorization.k8s.io
+subjects:
+- kind: User
+ name: example
+ apiGroup: rbac.authorization.k8s.io
+
+
+# SUPER-USER ROLE FOR ENTIRE CLUSTER (CLUSTER ROLE)
+------------------------------------------------------
+For superusers who need admin access to the entire cluster, change the "kind" value to "ClusterRole," which gives the user access to all resources within the cluster, instead of just one namespace:
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+ name: superuser
+rules:
+- apiGroups:
+ - ""
+ resources: ["*"]
+ verbs:
+ - get
+ - list
+ - watch
+ - create
+ - update
+ - patch
+ - delete
+
+And in this case, we’ll create a ClusterRoleBinding instead of a RoleBinding:
+
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+ name: superuser-binding
+roleRef:
+ kind: ClusterRole
+ name: superuser
+ apiGroup: rbac.authorization.k8s.io
+subjects:
+- kind: User
+ name: superuser
+ apiGroup: rbac.authorization.k8s.io
+
+
+======================================================
+SERVICE ACCOUNTS
+======================================================
+
+# Create service accounts for each application
+
+- Kubernetes uses service accounts to authenticate and authorize requests by pods to the Kubernetes API server. 
+- Kubernetes automatically assigns newly created pods to the “default” service account in your cluster and all applications share this service account. 
+- However, this configuration may not be desirable if, 
+  for example, you are using some applications for development purposes, and want those applications to use a “dev” service account instead of a default one.
+
+https://www.strongdm.com/blog/kubernetes-rbac-role-based-access-control
+https://medium.com/rahasak/kubernetes-role-base-access-control-with-service-account-e4c65e3f25cc
+
