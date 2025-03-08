@@ -417,4 +417,5 @@ SERVICE ACCOUNTS
 
 https://www.strongdm.com/blog/kubernetes-rbac-role-based-access-control
 https://medium.com/rahasak/kubernetes-role-base-access-control-with-service-account-e4c65e3f25cc
+https://kubernetes-tutorial.schoolofdevops.com/configuring_authentication_and_authorization/
 
