@@ -52,16 +52,37 @@ helm -h
 
 ### 03. Initialize a Helm Chart Repository
 
+- List all the Helm repo
+```
+helm repo list
+```
+
 - Once you have Helm ready, you can add a chart repository. Check Artifact Hub for available Helm chart repositories.
 ```
 helm repo add bitnami https://charts.bitnami.com/bitnami
+
+# List repos
+helm repo list
 ```
 
 - Once this is installed, you will be able to list the charts you can install:
 ```
+helm search repo apache
+
+helm search repo mysql
+helm search repo mysql --versions
+
 helm search repo bitnami
 ```
 
+- Remove a repo
+```
+helm repo remove bitnami
+
+
+# List repos
+helm repo list
+```
 ### 04. Install an Example Chart
 
 ```
