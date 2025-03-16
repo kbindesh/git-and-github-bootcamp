@@ -35,6 +35,21 @@ chmod 700 get_helm.sh
 helm version | cut -d + -f 1
 ```
 
+### XX. Get Help
+
+```
+helm --help
+OR
+helm -h
+```
+
+### XX. How does Helm know about the K8s cluster?
+
+- Helm uses the same kube-config file that kubectl uses
+
+- In case you want to use another config file, update the KUBECONFIG environment variable:
+  KUBECONFIG .kube/config
+
 ### 03. Initialize a Helm Chart Repository
 
 - Once you have Helm ready, you can add a chart repository. Check Artifact Hub for available Helm chart repositories.
