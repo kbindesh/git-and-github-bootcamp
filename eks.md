@@ -1,6 +1,13 @@
 # EKS
 
-- Install eksctl, kubectl, aws cli
+## Install AWS CLI
+- https://docs.aws.amazon.com/cli/v1/userguide/install-linux.html
+
+## Install eksctl
+- https://eksctl.io/installation/
+
+## Install kubectl
+- https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/
 
 ```
 kubectl version --client
