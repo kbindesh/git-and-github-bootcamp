@@ -345,8 +345,7 @@ $ echo $?
 
 ------------------------------------------------------------------------------
 SUMMARY
-
-
+-------
 - We’ve learned that the -i option of the docker run command attaches the STDIN of the container to the host process. 
 - Then, we’ve also seen how the -t option enables complete terminal functionality such as echo-off for password masking. 
 - Then, we also simulated the “input device is not a TTY” error by piping the pipe files and specifying the -t option.
@@ -355,8 +354,32 @@ SUMMARY
 =========================================
 DOCKER COMPOSE
 =========================================
+- monolithic vs distributed application architecture
+
+- Single host networking
+
+- Network firewalling
+
+- Bridge Networks
+
+- Imperative vs Declarative orchestration of containers
+
+- Introduction to Docker Compose
+
+- Setup Docker Compose
+
+- List Docker Compose commands
+
+
+----------------
 # Example-01
 ----------------
+
+- Running a multi-service app
+  1. Postgress SQL (5432)
+  2. SQLClient (5050)
+
+
 services:
   db:
     image: postgres:alpine
@@ -382,12 +405,43 @@ volumes:
   pg-data:
   pgadmin-data:
 
+- Create a folder called db in the step1 folder and add a file called init-db.sql to it with the following content:
 
+```
+CREATE TABLE images
+(
+  imageid serial UNIQUE PRIMARY KEY,
+  description character varying(10485760) NOT NULL,
+  url character varying(255) NOT NULL
+);
+
+ALTER TABLE images
+  OWNER TO dockeruser;
+ALTER ROLE dockeruser CONNECTION LIMIT -1;
+
+-- add image data
+INSERT INTO images (description, url) VALUES('vulture on tree', 'images/vulture.png');
+INSERT INTO images (description, url) VALUES('female lions', 'images/3-female-lions.png');
+INSERT INTO images (description, url) VALUES('antelopes', 'images/antelopes.png');
+INSERT INTO images (description, url) VALUES('birds', 'images/birds.png');
+INSERT INTO images (description, url) VALUES('buffalo', 'images/buffalo.png');
+INSERT INTO images (description, url) VALUES('cheetah', 'images/cheetah.png');
+INSERT INTO images (description, url) VALUES('elephants', 'images/elephants.png');
+INSERT INTO images (description, url) VALUES('jackal', 'images/jackal.png');
+INSERT INTO images (description, url) VALUES('giraffe', 'images/giraffe.png');
+INSERT INTO images (description, url) VALUES('hippos', 'images/hippos.png');
+INSERT INTO images (description, url) VALUES('male lion', 'images/male-lion.png');
+INSERT INTO images (description, url) VALUES('zebra', 'images/zebra.png');
+```
+
+# Deploy the application
 - docker compose up
-- navigate to http://
-localhost:5050
-- docker compose down -v
+- navigate to http://dockerhost:5050
 
+# Terminate the application
+docker compose down -v
+
+# Build the application
 
 - docker compose build
 - docker-compose -f docker-compose.dev.yml build
@@ -492,4 +546,42 @@ http://localhost:8080
 
 docker compose down
 
+
+
+
+======================================================================
+QUERIES
+-=====================================================================
+By default (using the default docker builder), you can only build images for a single platform at a time and for the docker host architecture only.
+
+# To know your docker host architecture
+docker system info 
+
+- Docker also allows you to build the images for
+  1. Target architecture other than the architecture of the machine where the build runs (e.g build the image for ARM64 on the machine with AMD64 architecture)
+  2. multiple platforms, which means that a single image may contain variants for different architectures, e.g. ARM64 and AMD64 (X86_64).
+
+
+# Single-platform image
+
+- QEMU
+
+# Verify that arm architecture was properly added
+docker buildx ls
+
+# Build an image for the target architecture by specifying the –platform flag
+docker build --platform linux/amd64 -t <IMAGE-URI> -f Dockerfile .
+
+# You can also use the buildx plugin
+docker buildx build --platform linux/amd64 -t <IMAGE-URI> -f Dockerfile .
+
+------------------------------------------------------------------------------------------------------
+# Multi-platform image
+
+- To build for multiple platforms at once, create a new builder that uses the docker-container driver. When using docker-container driver with buildx, –-platform flag can accept multiple values as an input separated by a comma. With multiple values the result will be built for all of the specified platforms and joined together into a single manifest list.
+
+# Build the image with buildx, passing the list of architectures (linux/amd64 and linux/arm64) to build for:
+docker buildx build --platform linux/amd64,linux/arm64 --push -t <IMAGE-URI> -f Dockerfile .
+
+docker buildx imagetools inspect <IMAGE-URI>
 
