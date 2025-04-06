@@ -435,11 +435,37 @@ INSERT INTO images (description, url) VALUES('zebra', 'images/zebra.png');
 ```
 
 # Deploy the application
-- docker compose up
+- docker compose up -d
 - navigate to http://dockerhost:5050
 
 # Terminate the application
 docker compose down -v
+
+# Scale the application 
+docker compose up --scale web=3
+[If we do this, we are in for a surprise. The output will look as in the following screenshot:]
+
+The second and third instances of the web service fail to start. The error message tells us why we
+cannot use the same host port, 3000, more than once. When instances 2 and 3 try to start, Docker
+realizes that port 3000 is already taken by the first instance.
+
+- SOLUTION - If, in the ports section of the Docker Compose file, we only specify the container port and leave out
+the host port, then Docker automatically selects an ephemeral port. Let’s do exactly this
+
+  - Then, we modify the docker-compose.yml file. The port mapping of the web service
+originally looks like this:
+
+```
+ports:
+– 3000
+```
+
+- Now, we can start the application again and scale it up immediately after that
+
+```
+$ docker compose up -d
+$ docker compose up -d --scale web=3
+```
 
 # Build the application
 
