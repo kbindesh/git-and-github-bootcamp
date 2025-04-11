@@ -184,9 +184,44 @@ Lab-XX - Static code Analysis with SonarQube (locally)
 
 Lab-XX - SonarQube Cloud integration with Jenkins
 ---------------------------------------------------------------------------------------
+# SETUP A JENKINS SERVER
+  - Java
+  - Jenkins
+  - Maven
+  - Git
 
-- Pre-requisites
-  Jenkins Server with Maven
+- Set the path of Java and Maven variables on Jenkins server (.bash_profile)
+  - JAVA_HOME
+  - M2
+  - M2_HOME
+
+```
+mvn --version
+```
+
+- Install following Jenkins plugins
+  1. Maven Invoker
+  2. Maven Integration
+  3. Github
+
+- Configure Global Configuration settings for Java, Maven
+  - Manage Jenkins >> Tools 
+    
+    Name: Java-17
+    JAVA_HOME: /usr/lib/jvm/java-17-amazon-corretto.x86_64
+    
+    Name: Default
+    Path to git executable: /usr/bin/git
+    
+    Name: Maven-3.9.8
+    MAVEN_HOME: /opt/apache-maven-3.9.8
+
+- Create a new Jenkins Job to Test the setup
+  - Type: Pipeline
+  - Github repo: https://github.com/kbindesh/mvn-app-for-jenkins-pipeline/tree/master
+
+
+# SETUP SONARQUBE CLOUD ACCOUNT
 
 - Create an account https://sonarcloud.io >> Sign up >> with Github credentials
 
