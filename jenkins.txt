@@ -203,6 +203,7 @@ mvn --version
   1. Maven Invoker
   2. Maven Integration
   3. Github
+  4. Pipeline: Stage View
 
 - Configure Global Configuration settings for Java, Maven
   - Manage Jenkins >> Tools 
