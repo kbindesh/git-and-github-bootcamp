@@ -225,12 +225,14 @@ mvn --version
 # SETUP SONARQUBE CLOUD ACCOUNT
 
 - Create an account https://sonarcloud.io >> Sign up >> with Github credentials
+  - OR simply sign-in here: https://sonarcloud.io/login
 
 - Generate SonarCloud token - Account >> My Account >> Security >> Generate token
 
-- Store the SonarCloud token on Jenkins server - Manage Jenkins >> Credentials >> Secret text >>
-  ID: sonar-creds
-  Secret: <token_here>
+- Store the SonarCloud token on Jenkins server
+  - Manage Jenkins >> Credentials >> Secret text >>
+    ID: sonar-creds
+    Secret: <token_here>
 
 - Download and install "SonarQube scanner" plugins on Jenkins server
 
@@ -253,63 +255,50 @@ mvn --version
 - Create sonar-project.properties
   [Add the values as per above created project & org] 
 
-sonar.verbose=true
-sonar.projectKey=prject_key
-sonar.organization=project_org
-sonar.projectName=project_name
-sonar.language=java
-sonar.sourceEncoding=UTF-8
-sonar.sources=.
-sonar.java.binaries=target/classes
-sonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+  sonar.verbose=true
+  sonar.projectKey=prject_key
+  sonar.organization=project_org
+  sonar.projectName=project_name
+  sonar.language=java
+  sonar.sourceEncoding=UTF-8
+  sonar.sources=.
+  sonar.java.binaries=target/classes
+  sonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
 
 
 - Add SonarQube stage to the Jenkinsfile
 
-search Jenkins extension for SonarQube >> https://docs.sonarsource.com/sonarqube-server/latest/analyzing-source-code/scanners/jenkins-extension-sonarqube/
+  - search Jenkins extension for SonarQube >> https://docs.sonarsource.com/sonarqube-server/latest/analyzing-source-code/scanners/jenkins-extension-sonarqube/
 
-pipeline {
-    agent any
-
-    environment {
-      package_name = 'webapp_package'
-    }
-
-    tools {
-      maven 'Maven-3.9.8'
-      jdk 'Java-17'
-    }
-
-    stages {
-        stage("Pulling the Code from SCM"){ 
-            steps { 
-                echo "Cloning the code"
-                git url: 'https://github.com/kbindesh/mvn-lab-project.git', branch: 'main'
-            }   
-        }       
-        stage('Clear previous builds') { 
-            steps {
-              sh 'mvn clean'
-            }
-        }
-        stage('Perform Unit Testing'){
-          steps {
-            sh 'mvn test'
-          }
-        }
-        stage('Compile and Build the App'){
-          steps {
-            sh 'mvn package'
-          }
-        }
-        stage('SonarCloud analysis') {
+    pipeline {
+      agent any
+    
+      tools {
+        jdk 'Java-17'
+        maven 'Maven-3.9.8'
+      }
+    
+      stages {
+        stage('Clean and Build the Application'){
           steps{
-            withSonarQubeEnv(credentialsId: 'sonarqube-token', installationName: 'sonarcloud') {
-              sh 'mvn org.sonarsource.scanner.maven:sonar-maven-plugin:3.11.0.3922:sonar'
-            }
+            sh 'mvn validate'
           }
         }
+    
+        stage('SonarCloud analysis') {
+            steps{
+              withSonarQubeEnv('sonarqube-server') {
+                sh 'mvn clean package sonar:sonar -Dsonar.projectKey=bin-project-org_bin-project -Dsonar.projectName=bin_project -Dsonar.organization-bin_project_org -Dsonar.host.url=https://sonarcloud.io -Dsonar.token=cacf9e1489915183a5a1695356b859106f3f8a7f -X'
+              }
+            }
+        }
+      }
     }
+
+- SonarScanner for Maven
+  - Update the settings.xml (<MAVEN_HOME>/conf or ~/.m2) file as metioned on this document: https://docs.sonarsource.com/sonarqube-server/9.6/analyzing-source-code/scanners/sonarscanner-for-maven/
+
+
 
 Lab-XX - Java App deployment on Apache Tomcat server | Integrating Jenkins with Tomcat
 ---------------------------------------------------------------------------------------
