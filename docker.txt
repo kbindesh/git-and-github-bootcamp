@@ -572,6 +572,143 @@ http://localhost:8080
 
 docker compose down
 
+======================================================================
+DOCKER SWARM
+-=====================================================================
+
+docker swarm init
+
+- When you initialize the docker swarm mode, following commands gets activated:
+  - docker swarm - ca, init, join join-token, leave, update
+  - docker node - demote, promote, rm, ls, inspect
+  - docker service - create, inspect, logs, ls, ps, rm, rollback, scale, update
+  - docker stack - config, deploy, ls, ps, rm, services
+  - docker secret - create, inspect, ls, rm
+
+
+# To join worker node to the swarm cluster
+docker swarm join --token SWMTKN
+
+# Swarm Intro and Creating a 3-Node Swarm Cluster
+
+## Create Your First Service and Scale it Locally
+
+docker info
+
+docker swarm init
+
+docker node ls
+
+docker node --help
+
+docker swarm --help
+
+docker service --help
+
+docker service create alpine ping 8.8.8.8
+
+# List docker compose services
+docker service ls
+
+# List all the containers (replicas) associated with a service
+docker service ps <service_name>
+
+# List containers
+docker container ls
+
+# Scale a service
+docker service update --help
+docker service update <service_name> --replicas 3
+
+docker service ls
+
+docker service ps <service_name>
+
+docker container ls
+
+
+docker container rm -f frosty_newton.1.TAB COMPLETION
+[Error response from daemon: cannot remove container | won't let you delete]
+
+docker container stop <container_name>
+[Container will be restarted again]
+
+docker service ls
+
+docker service ps <service_name>
+
+docker service rm <service_name>
+
+docker service ls
+
+docker container ls
+
+## Creating a 3-Node Swarm Cluster
+
+http://play-with-docker.com
+
+docker info
+
+docker-machine
+
+docker-machine create node1
+
+docker-machine ssh node1
+
+docker-machine env node1
+
+docker info
+
+http://get.docker.com
+
+docker swarm init
+
+docker swarm init --advertise-addr TAB COMPLETION
+
+docker node ls
+
+docker node update --role manager node2
+
+docker node ls
+
+docker swarm join-token manager
+
+docker node ls
+
+docker service create --replicas 3 alpine ping 8.8.8.8
+
+docker service ls
+
+docker node ps
+
+docker node ps node2
+
+docker service ps sleepy_brown
+
+## Scaling Out with Overlay Networking
+
+docker network create --driver overlay mydrupal
+
+docker network ls
+
+docker service create --name psql --netowrk mydrupal -e POSTGRES_PASSWORD=mypass postgres
+
+docker service ls
+
+docker service ps psql
+
+docker container logs psql TAB COMPLETION
+
+docker service create --name drupal --network mydrupal -p 80:80 drupal
+
+docker service ls
+
+watch docker service ls
+
+docker service ps drupal
+
+docker service inspect drupal
+
 
 
 
