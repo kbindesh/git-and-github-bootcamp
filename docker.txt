@@ -1,3 +1,67 @@
+============================================================================
+DOCKER IMAGES
+============================================================================
+# Flask App Dockerfile
+# Which base image to use?
+
+Example-01: Docker Images
+----------------------------
+Github Repo Name: python-flask-app
+
+
+FROM python:3.11-alpine
+LABEL maintainer="KBindesh"
+WORKDIR /app
+COPY . .
+RUN pip install -r requirements.txt
+# EXPOSE 8080
+# ENTRYPOINT ["python"]
+CMD ["python", "src/app.py"]
+------------------------------------------
+FROM python:3.11-alpine
+LABEL maintainer="k.bindesh@gmail.com"
+COPY . /app
+WORKDIR /app
+RUN pip install -r requirements.txt
+EXPOSE 8080
+ENTRYPOINT ["python"]
+CMD ["src/app.py"]
+
+# Command to run when container starts
+CMD ["python", "src/app.py"]
+-------------------------------------------------------------------
+docker build -t image1 .
+docker run -it --name container -p 4000:8080 image1
+
+docker run --rm -it --name test alpine /bin/sh
+apk add curl
+curl http://172.17.0.2:8080
+--------------------------------------------
+
+Example-02: Docker Images
+---------------------------
+Github Repo Name: docker-sample-app
+
+Dockerfile
+
+```
+FROM node:18-alpine
+RUN mkdir -p /usr/src/app
+COPY ./app/* /usr/src/app
+WORKDIR /usr/src/app
+RUN npm install
+CMD node /usr/src/app/index.js
+```
+
+docker image build -t <image_name> .
+docker image ls 
+
+docker image tag my-image:1.0.0 my-image:1.0.0-alpine
+docker login
+docker push <image_name>
+
+-------------------------------------------------------------
+
 ==========================================================================
 # DOCKER STORAGE
 ==========================================================================
