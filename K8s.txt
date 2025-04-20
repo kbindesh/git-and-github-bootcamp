@@ -90,6 +90,7 @@ spec:
         limits:
           memory: "128Mi"
           cpu: "500m"
+
 ---------------------------------------------------
 Understanding an init container
 ---------------------------------------------------
@@ -123,11 +124,12 @@ the init container succeeds.
 =====================================================
 https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/
 
-# Pod Lifecycle phases
-
-# Container Lifecycle phases
+# Pod Lifecycle phases - Pending, Running, Succeeded, Failed, Unknown
+https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/
 
 # Container restart policy 
+The spec of a Pod has a restartPolicy field with possible values Always, OnFailure, and Never. The default value is Always.
+
 =====================================================
 Deploying and managing applications
 =====================================================
