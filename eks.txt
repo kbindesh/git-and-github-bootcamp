@@ -1,39 +1,38 @@
-# Amazon EKS
 
-## XX EKS ARCHITECTURE
+- Create EKS cluster + DockerHost + Load System (kubectl, eksctl, git)
 
-## XX. SETUP EKS CLUSTER USING AWS CLI
+- Authentication and Authorization in Amazon EKS
+  - User Management
+  - RBAC
+  - kubeconfig
 
-## XX. NODE POOLS
+- Application Architecture - Voting Application
+- Build all the app (services) images and push it in DockerHub - IMP
+- Build all the app (services) images and push it in ECR 
+  - Install Docker Compose
+  - Clone the code : git clone https://github.com/dockersamples/example-voting-app.git
+  - Build the images: docker compose build
+  - Tag the images as per your registry name
+    - docker tag example-voting-app-worker kbindesh/voting-app-worker
+    - docker tag example-voting-app-result kbindesh/voting-app-result
+    - docker tag example-voting-app-vote kbindesh/voting-app-vote
+- Login to Docker Registry
+  - docker login
+- Push the images to DockerHub
+  - docker image push kbindesh/voting-app-worker 
+  - docker image push kbindesh/voting-app-result 
+  - docker image push kbindesh/voting-app-vote  
 
-## XX. NAMESPACES
+- Create custom Namespaces - Dev, Test, Prod
+- Combining manifests into single file
+- Deploy App in custom namespaces
+- Namespace with RangeLimits and Quotas
+- Configuring Apps in K8s - configMaps
+- Services
+  - Deploy an app and Create a ClusterIP service for it | access the app using ClusterIP service
+  - Deploy an app and publish it using NodePort service | access the app over the web
+  - Deploy an app and publish it using LoadBalancer service | access the app over the web
 
-## XX. DEPLOY APPS IN CUSTOM NAMESPACES
-
-## XX. NAMESPACES WITH RANGE LIMITS AND QUOTAS 
-
-## XX. DEPLOY APPS USING DEPLOYMENT API
-
-## XX. AUTOSCALING PODS USING HPA
-
-## XX. PUBLISH APPS USING LOAD-BALANCER SERVICE
-
-## XX. PUBLISH APPS USING INGRESS CONTROLLER
-
-## XX. SECURING K8S
-
-- kubeconfig
-- rbac
-- user management
-- service accounts
-- role, clusterrole, rolebinding and clusterrolebinding
-
-## XX. MANAGING STORAGE USING PVC AND PV
-
-## PACKAGE MANAGEMENT USING HELM
-
-## LOGGING AND MONITORING EKS CLUSTER RESOURCES & APPS
-
-## 
-
-
+- Auto-scaling in K8s
+  - HPA - Deploy an app with ClusterIP service and configure it for autoscaling using HPA
+  - Cluster Autoscaler
