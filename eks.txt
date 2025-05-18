@@ -36,3 +36,93 @@
 - Auto-scaling in K8s
   - HPA - Deploy an app with ClusterIP service and configure it for autoscaling using HPA
   - Cluster Autoscaler
+
+
+============================================================
+INGRESS
+=============================================================
+
+# Ingress architecture
+========================
+
+Ingress is defined in the networking.k8s.io/v1 API sub-group, and it requires the
+usual two constructs:
+1. A resource
+2. A controller
+
+=> The "resource" defines the routing rules, and the controller implements them.
+=> Kubernetes doesn’t have a built-in Ingress controller, meaning you need
+to install one. This differs from Deployments, ReplicaSets, Services, and most other
+resources that have built-in pre-configured controllers.
+
+=> Once you have an Ingress controller, you deploy Ingress resources with rules telling the
+controller how to route requests.
+
+
+
+You’ll complete all of the following steps:
+1. Install the NGINX Ingress controller
+2. Configure an Ingress class
+3. Deploy a sample app
+4. Configure an Ingress object
+5. Inspect the Ingress object
+6. Configure DNS name resolution
+7. Test the Ingress
+
+
+1. Install the NGINX Ingress controller
+
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.9.4/deploy/static/provider/cloud/deploy.yaml
+
+- Run the following command to check the ingress-nginx Namespace and ensure the controller Pod is running. I
+kubectl get pods -n ingress-nginx -l app.kubernetes.io/name=ingress-nginx
+
+2. Ingress classes
+
+Ingress classes allow you to run multiple Ingress controllers on a single cluster. The process is simple:
+1. You assign each Ingress controller to an Ingress class
+2. When you create Ingress objects, you assign them to an Ingress class
+
+If you’re following along, you’ll have at least one Ingress class called nginx. This was
+created when you installed the NGINX controller.
+
+$ kubectl get ingressclass
+NAME CONTROLLER PARAMETERS AGE
+nginx k8s.io/ingress-nginx <none> 2m25s
+
+
+$ kubectl describe ingressclass nginx
+
+Name: nginx
+Labels: app.kubernetes.io/component=controller
+app.kubernetes.io/instance=ingress-nginx
+app.kubernetes.io/name=ingress-nginx
+app.kubernetes.io/part-of=ingress-nginx
+app.kubernetes.io/version=1.9.4
+Annotations: <none>
+Controller: k8s.io/ingress-nginx
+
+
+3. Configure host-based and path-based routing
+
+This section deploys two apps and a single Ingress object. The Ingress will route traffic
+to both apps via a single load balancer. This can be a cloud-based load balancer or
+localhost on a local cluster.
+
+You’ll complete all the following steps:
+
+1. Deploy an app called shield and front it with a ClusterIP Service (backend) called
+svc-shield
+2. Deploy an app called hydra and front it with a ClusterIP Service (backend) called
+svc-hydra
+3. Deploy an Ingress object that creates a single load balancer and routing rules for
+the following hostnames and paths
+• Host-based: shield.mcu.com >> svc-shield
+• Host-based: hydra.mcu.com >> svc-hydra
+• Path-based: mcu.com/shield >> svc-shield
+• Path-based: mcu.com/hydra >> svc-hydra
+
+4. Configure DNS name resolution to that shield.mcu.com, hydra.mcu.com, and
+mcu.com point to the load balancer
+
+
