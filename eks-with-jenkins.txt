@@ -1,0 +1,102 @@
+K8s Management Server - EC2 Instance
+=======================================
+
+Install Docker, kubectl, eksctl, git
+-------------------------------------
+
+#!/bin/bash
+amazon-linux-extras install docker
+service docker start
+usermod -a -G docker ec2-user
+chkconfig docker on
+yum install -y git
+
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+sudo chmod +x kubectl
+sudo mv kubectl /usr/local/bin
+ARCH=amd64
+PLATFORM=$(uname -s)_$ARCH
+curl -sLO "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_$PLATFORM.tar.gz"
+curl -sL "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_checksums.txt" | grep $PLATFORM | sha256sum --check
+sudo tar -xzf eksctl_$PLATFORM.tar.gz -C /tmp && rm eksctl_$PLATFORM.tar.gz
+sudo mv /tmp/eksctl /usr/local/bin
+
+Install/Upgrade AWS CLI version1 to 2
+----------------------------------------
+
+sudo yum remove awscli
+sudo curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+sudo unzip awscliv2.zip
+sudo ./aws/install
+
+--------------------
+Create EKS Cluster
+--------------------
+eksctl create cluster --name=labekscluster --region=us-east-1 --zones=us-east-1a,us-east-1b --without-nodegroup
+eksctl utils associate-iam-oidc-provider --region us-east-1 --cluster labekscluster --approve
+eksctl create nodegroup --cluster=labekscluster --region=us-east-1 --name=eksdemo1-ng-public1 --node-type=t3.small --nodes=1 --nodes-min=1 --nodes-max=4 --node-volume-size=20 --ssh-access --ssh-public-key=binWinWebServerKey --managed --asg-access --external-dns-access --full-ecr-access --appmesh-access --alb-ingress-access
+
+--------------------------------------------------
+Provision another EC2 Instance - JENKINS SERVER
+---------------------------------------------------
+#!/bin/bash
+yum install -y java-17-amazon-corretto.x86_64
+java --version
+wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
+rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
+yum -y upgrade
+yum install -y jenkins
+systemctl start jenkins
+systemctl enable jenkins
+yum install -y git
+
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+sudo chmod +x kubectl
+sudo mv kubectl /usr/local/bin
+ARCH=amd64
+PLATFORM=$(uname -s)_$ARCH
+curl -sLO "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_$PLATFORM.tar.gz"
+curl -sL "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_checksums.txt" | grep $PLATFORM | sha256sum --check
+sudo tar -xzf eksctl_$PLATFORM.tar.gz -C /tmp && rm eksctl_$PLATFORM.tar.gz
+sudo mv /tmp/eksctl /usr/local/bin
+
+Install/Upgrade AWS CLI version 1 to 2
+----------------------------------------
+
+sudo yum remove awscli
+sudo curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+sudo unzip awscliv2.zip
+sudo ./aws/install
+
+Connect kubectl to an EKS cluster by creating a kubeconfig file
+---------------------------------------------------------------
+Ref: https://docs.aws.amazon.com/eks/latest/userguide/create-kubeconfig.html
+
+ 
+aws sts get-caller-identity
+aws eks update-kubeconfig --name labekscluster --region us-east-1
+cat ~/.kube/config
+
+DEVELOP THE APP CODE
+====================
+
+
+CREATE Dockerfile
+====================
+
+
+CREATE Jenkinsfile
+====================
+
+
+Push the code to GitHub
+=======================
+
+
+INSTALL JENKINS PLUGINS
+========================
+- AWS CLI
+- Kubernetes Deploy
+
+CREATE A JENKINS JOB
+======================
