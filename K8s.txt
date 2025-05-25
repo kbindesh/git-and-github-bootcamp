@@ -469,3 +469,90 @@ https://www.strongdm.com/blog/kubernetes-rbac-role-based-access-control
 https://medium.com/rahasak/kubernetes-role-base-access-control-with-service-account-e4c65e3f25cc
 https://kubernetes-tutorial.schoolofdevops.com/configuring_authentication_and_authorization/
 
+
+========================================================================================================
+
+HPA
+----
+
+- Check if metrics server is available or not
+kubectl get deployment metrics-server -n kube-system
+kubectl get pods -n kube-system | grep metrics-server
+Error from server (NotFound): deployments.apps "metrics-server" not found
+
+kubectl top nodes
+kubectl top node minikube
+error: Metrics API not available
+
+
+# Install Metrics Server - on EKS
+------------------------------------
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+# Verify if the metrics server deployment is running 
+kubectl get deployment metrics-server -n kube-system
+
+#Test the metrics server is working by displaying resource (CPU/memory) usage of nodes.
+kubectl top nodes
+
+# Install Metrics Server - on minikube
+------------------------------------
+minikube addons list
+OR
+eksctl get addons --cluster <cluster-name>
+
+minikube addons enable metrics-server
+
+
+
+# Deployment an Application and a cluster IP service
+------------------------------------------------------ 
+kubectl apply -f https://k8s.io/examples/application/php-apache.yaml
+kubectl autoscale deployment php-apache --cpu-percent=50 --min=1 --max=10
+kubectl get hpa
+
+# Create a load for the web server by running a container.
+kubectl run -i \
+    --tty load-generator \
+    --rm --image=busybox \
+    --restart=Never \
+    -- /bin/sh -c "while sleep 0.01; do wget -q -O- http://php-apache; done"
+
+
+[HPA checks metrics and adjusts the number of pods every 15 seconds]
+[Metrics-server has a default metric-resolution of 30 seconds, meaning it collects and aggregates metrics every 30 seconds]
+
+kubectl top nodes
+kubectl top pods
+kubectl top pod --sort-by=cpu
+kubectl top pod –-sort-by=memory
+kubectl top pod -A --sort-by=memory
+
+Monitoring the resource usage of an Application
+------------------------------------------------
+kubectl top pod <pod_name>
+kubectl top pod php-apache-6487c65df8-55x45 --containers
+----------------------------------------------------------
+# Monitoring cluster events
+
+# We can get Kubernetes events by using the following command
+kubectl get events
+
+kubectl get events --sort-by=.metadata.creationTimestamp
+
+# If you want to collect the events during a deployment, you can run the following command on the side
+kubectl get events --watch
+------------------------------------------
+Understanding liveness, readiness, and startup probes
+
+To explore the health status of the pods further, let’s talk about health probes. Probes allow you to know
+how Kubernetes determines the states of your containers. Let’s have look at each of them one by one:
+• Liveness probes indicate whether the container is running properly, as they govern when the
+cluster will decide to restart the container automatically.
+• Readiness probes indicate whether the container is ready to accept requests.
+• Startup probes check when a container starts and are very handy for containers that require
+an additional startup time on their first initialization, preventing them from being killed by
+kubelet before they get on their feet. Once configured, they disable liveness and readiness
+checkers until they’re complete.
+
+
