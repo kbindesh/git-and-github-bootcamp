@@ -544,15 +544,154 @@ kubectl get events --sort-by=.metadata.creationTimestamp
 kubectl get events --watch
 ------------------------------------------
 Understanding liveness, readiness, and startup probes
+------------------------------------------
+LIVENESS PROBE
+---------------
+- The liveness probe ensures an application within a container is live and operational based on a specified test. 
+- Defining probes correctly can improve Pod resilience and availability.
+- A Kubernetes liveness probe is a mechanism used to determine if a container is still running properly. 
+- If a liveness probe fails, Kubernetes will restart the container to restore functionality.
+- Liveness probes are commonly used to detect application deadlocks, crashes, or unresponsive states that cannot be self-recovered. 
+- They are configured using commands, HTTP requests, or TCP socket checks, ensuring Kubernetes can intervene when a container stops responding.
 
-To explore the health status of the pods further, let’s talk about health probes. Probes allow you to know
-how Kubernetes determines the states of your containers. Let’s have look at each of them one by one:
-• Liveness probes indicate whether the container is running properly, as they govern when the
-cluster will decide to restart the container automatically.
-• Readiness probes indicate whether the container is ready to accept requests.
-• Startup probes check when a container starts and are very handy for containers that require
-an additional startup time on their first initialization, preventing them from being killed by
-kubelet before they get on their feet. Once configured, they disable liveness and readiness
-checkers until they’re complete.
+# Types of liveness probes
+<refer the diagram>
+
+=> How to define a Kubernetes liveness probe
+
+Example-01: ExecAction handler
+----------------
+
+The example below shows the use of the exec command to check if a file exists at the path /usr/share/liveness/html/index.html using the cat command. If no file exists, then the liveness probe will fail, and the container will be restarted.
+
+```
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    test: liveness
+  name: liveness-exec
+spec:
+  containers:
+  - name: liveness
+    image: registry.k8s.io/liveness:0.1
+    ports:
+    - containerPort: 8080
+    livenessProbe:
+      exec:
+        command:
+        - cat
+        - /usr/share/liveness/html/index.html
+      initialDelaySeconds: 5
+      periodSeconds: 5
+```
 
 
+Example-02 - TCPSocketAction handler  
+-------------------------------------
+
+In this example, the liveness probe uses the TCP handler to check port 8080 is open and responding. With this configuration, the kubelet will attempt to open a socket to your container on the specified port. If the liveness probe fails, the container will be restarted.
+
+```
+apiVersion: v1
+kind: Pod
+metadata:
+  name: liveness
+  labels:
+    app: liveness-tcp
+spec:
+  containers:
+  - name: liveness
+    image: registry.k8s.io/liveness:0.1
+    ports:
+    - containerPort: 8080
+    livenessProbe:
+      tcpSocket:
+        port: 8080
+      initialDelaySeconds: 5
+      periodSeconds: 5
+```
+
+Example 3: HTTPGetAction handler
+--------------------------------
+
+This example shows the HTTP handler, which will send an HTTP GET request on port 8080 to the /health path. If a code between 200–400 is returned, the probe is considered successful. If a code outside of this range is returned, the probe is unsuccessful, and the container is restarted. The httpHeaders option is used to define any custom headers you want to send.
+
+```
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    test: liveness
+  name: liveness-http
+spec:
+  containers:
+  - name: liveness
+    image: registry.k8s.io/liveness:0.1
+    livenessProbe:
+      httpGet:
+        path: /health
+        port: 8080
+        httpHeaders:
+        - name: Custom-Header
+          value: ItsAlive
+      initialDelaySeconds: 5
+      periodSeconds: 5
+```
+
+# To check if a liveness probe is working in Kubernetes, follow these steps:
+
+Check pod events – Run kubectl describe pod <pod-name> -n <namespace> and under the Events section for messages related to the liveness probe, such as failures or restarts.
+
+Inspect pod logs – Check if the container is restarting due to probe failures with kubectl logs <pod-name> -n <namespace>. If the container restarts repeatedly, the liveness probe might be failing.
+
+Check pod status – Run: kubectl get pods -n <namespace> . If the pod is in a CrashLoopBackOff or Restarting state, the liveness probe may be failing.
+
+Describe deployment – For deployments, inspect the configuration: kubectl get deployment <deployment-name> -o yaml -n <namespace> . Look for the livenessProbe section under containers.
+
+Manually test liveness probe endpoint – If the probe uses an HTTP endpoint, you can test it using curl: curl http://<pod-ip>:<liveness-port>/<probe-path>.
+
+
+# READINESS PROBE
+----------------------
+- Readiness probes monitor when the application becomes available. 
+- If it fails, no traffic will be sent to the Pod. They are used when an app needs configuration before it becomes ready. 
+- If the readiness probe fails but the liveness probe succeeds, the kubelet determines that the container is not ready to receive network traffic but is still working to become ready.
+
+Example-01
+------------
+In this example, the readiness probe is configured to run a custom command to run a script inside the container. Inside the container, the custom script should be responsible for performing the readiness check. The script can return a non-zero exit code if the readiness check fails and a zero exit code if it succeeds.
+
+1. exec - specifies a Command check.
+2. command  - is an array of commands to run inside the container. In this example, we run a shell script named “check-script.sh.”
+3. initialDelaySeconds - specifies that the probe should start 20 seconds after the container starts.
+4. periodSeconds - specifies that the probe will be repeated every 15 seconds after the initial delay.
+
+```
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-app-pod
+spec:
+  containers:
+  - name: my-app-container
+    image: my-app-image
+    ports:
+    - containerPort: 80
+    readinessProbe:
+      exec:
+        command:
+        - /bin/sh
+        - -c
+        - check-script.sh
+      initialDelaySeconds: 20
+      periodSeconds: 15
+```
+
+# STARTUP PROBES
+--------------------
+- The kubelet uses startup probes to detect when a container application has started. 
+- When these are configured, liveness and readiness checks are disabled until they are successful, ensuring startup probes don’t interfere with the application startup.
+- These are particularly useful with slow-starting containers, preventing the kubelet from killing them before they are up and running when a liveness probe fails.
+- If liveness probes are used on the same endpoint as a startup probe, set the failureThreshold of the startup probe higher to support long startup times.
+- If it fails, the event is logged, and the kubelet kills the container according to the configured restartPolicy.
