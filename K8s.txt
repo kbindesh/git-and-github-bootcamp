@@ -17,9 +17,12 @@ K8S WORKLOAD SCHEDULING
 UNDERSTANDING PODS
 ==========================
 
+- Pods are designed to be mortal and immutable
+
 
 DEPLOY 1ST APP (POD)
 =====================
+
 Imperative
 ------------
 kubectl run nginx --image nginx:latest
@@ -34,11 +37,21 @@ kubectl run nginx --image=nginx --dry-run -o yaml > pod-sample.yaml
 $ kubectl get pods
 $ kubectl get pods -o wide
 $ kubectl describe pod <pod_name>
+$ kubectl logs <pod_name>
+$ kubectl exec hello-pod -- ps - execute commands inside running containers
 
 Declarative
 -----------
 - Install VS Code - K8s extension
 - Syntax of a manifest
+
+# shows a complete list of Pod attributes
+kubectl explain pods --recursive
+
+# drill into specific Pod attributes and see their supported values
+# Pod restartPolicy attribute
+kubectl explain pod.spec.restartPolicy
+
 
 Lab-01: Deploy nginx pod (single container)
 ---------------------------------------------
@@ -128,7 +141,16 @@ https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/
 https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/
 
 # Container restart policy 
-The spec of a Pod has a restartPolicy field with possible values Always, OnFailure, and Never. The default value is Always.
+The spec of a Pod has a restartPolicy field with possible values:
+- Always
+- OnFailure
+- Never
+The default value is Always.
+
+===================================
+kubectl get pods hello-pod -o yaml
+===================================
+
 
 =====================================================
 Deploying and managing applications
