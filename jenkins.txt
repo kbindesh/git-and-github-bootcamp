@@ -110,15 +110,129 @@ Lab-XX - Jenkins integration with github using poll SCM
 
 Lab-XX - Compile & Build maven application using Jenkins with Github webhook
 -----------------------------------------------------------------------------
-# INSTALL MAVEN 
+# Develop a sample Maven Application
+mvn archetype:generate "-DgroupId=com.mycompany.app" "-DartifactId=my-app" "-DarchetypeArtifactId=maven-archetype-quickstart" "-DarchetypeVersion=1.5" "-DinteractiveMode=false"
 
-# SETTING UP MAVEN PROJECT
+# VALIDATE, COMPILE AND BUILD THE APP LOCALLY
 
-# JENKINS INTEGRATION WITH MAVEN - 01
+```
+mvn validate
+mvn compile
 
-# JENKINS INTEGRATION WITH MAVEN - 02 (using maven integration plugin)
+# To see the output of your Maven app, run the compiled version of app (.class) present in target folder
+java '-XX:+ShowCodeDetailsInExceptionMessages' '-cp' 'target\classes' 'com.mycompany.app.App'
 
-# BUILD MAVEN APP USING JENKINS
+[The preceding command should display the "Hello World" message without any errors]
+```
+
+# Create a new GitHub repository 
+
+# Push the Maven App code to GitHub
+
+------------------------------------------------------------
+## Configure Jenkins Server for building Maven Application
+------------------------------------------------------------
+
+# Install & Configure JAVA (prerequisite for Maven)
+
+# Set Path for JAVA
+
+```
+find /usr/lib/jvm/java* | head -n 3
+[From the preceding command output, copy "/usr/lib/jvm/java-17-amazon-corretto.x86_64" path]
+
+vi ~/.bash_profile
+
+JAVA_HOME=/usr/lib/jvm/java-17-amazon-corretto.x86_64
+
+PATH=$PATH:$HOME/bin:$JAVA_HOME
+[Save the file and exit]
+
+source ~/.bash_profile
+echo $PATH
+```
+
+# Install Jenkins PLUGINS
+
+Maven Integration
+Maven Invoker
+Github Plugin
+
+# Install and Configure MAVEN on Jenkins server
+
+```
+cd /opt
+
+# Download the maven binary
+wget https://dlcdn.apache.org/maven/maven-3/3.9.8/binaries/apache-maven-3.9.8-bin.tar.gz
+
+tar -xvzf apache-maven-3.9.8-bin.tar.gz
+ls -l apache-maven-3.9.8
+cd apache-maven-3.9.8
+```
+
+# Setup home path for Maven
+
+```
+vi ~/.bash_profile
+
+# Create M2_HOME and M2 variable with maven location specs
+M2_HOME=/opt/apache-maven-3.9.8
+M2=/opt/apache-maven-3.9.8/bin
+
+PATH=$PATH:$HOME/bin:$JAVA_HOME:$M2_HOME:$M2
+
+[Save the file and exit]
+
+source ~/.bash_profile
+echo $PATH
+
+# To verify Maven installation
+mvn --version
+```
+
+# Save the required tools location on Jenkins - Java, Maven and Git
+
+Navigate to Jenkins server dashboard >> Manage Jenkins >> Tools
+
+JDK
+Name: Java-17
+JAVA_HOME: /usr/lib/jvm/java-17-amazon-corretto.x86_64
+
+Git
+Name: Default
+Path to git executable: /usr/bin/git
+
+Maven - location of maven installation on maven build agent (not on jenkins server)
+Name: Maven-3.9.8
+MAVEN_HOME: /opt/apache-maven-3.9.8
+
+
+# Create a new Jenkins job | Type - Maven project
+-------------------------------------------------
+Name: mvn-build-job-01
+Type: Maven project
+
+Source Code Management
+Select Git
+Repository URL: <github_repo_url>
+Branch to build: <github_branch_name>
+
+Build
+Maven Version: Maven-3.9.8
+Root POM: pom.xml
+Goals and Options: clean install
+
+# Run the Jenkins Job
+
+```
+# List the target directory of your workspace to see the build artifact (.jar file).
+cd /var/lib/jenkins/workspace/<your_jenkins_job_name>
+
+# Finally, test the app by executing the app build (.jar)
+java -cp target/my-app-1.0-SNAPSHOT.jar com.mycompany.app.App
+
+```
 
 Lab-XX - Sending Email notification with Jenkins
 -------------------------------------------------
