@@ -443,11 +443,76 @@ cluster).
 ==================
 
 This section covers the following:
-• RBAC big picture
+• RBAC Overview
 • Users and permissions
 • Cluster-level users and permissions
 • Pre-configured users and permissions
 
+
+3.1] RBAC Overview
+---------------------
+The most common authorization module is RBAC (Role-Based Access Control). Primarily, RBAC is about three things:
+1. Users
+2. Actions
+3. Resources
+
+[RBAC Answers - Which "users" can perform "which" actions against which "resources"]
+
+- RBAC is enabled on most Kubernetes clusters.
+- RBAC is a least-privilege deny-by-default system i.e. everything is locked down, and you need to create allow rules to allow certain behaviours.
+- RBAC doesn't support deny rules
+
+3.2] Users and Permissions
+---------------------------
+
+- Kubernetes has four RBAC objects:
+
+• Roles - define a set of permissions | Namespace scoped
+• RoleBindings - RoleBindings bind them to users | Namespace scoped
+• ClusterRoles
+• ClusterRoleBindings
+
+# Closer look at the Role Rules
+--------------------------------
+- Role objects have the following three properties that define which actions are allowed against which objects:
+• verbs
+• apiGroups
+• resources
+
+- The following resource manifest defines a Role object called "read-deployments" and grants permission to get, watch, and list Deployment objects in the shield
+Namespace.
+
+```
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: shield
+  name: read-deployments
+rules:
+  - verbs: ["get", "watch", "list"] <<==== Allowed actions
+    apiGroups: ["apps"] <<==== on resources
+    resources: ["deployments"] <<==== of this type
+```
+
+- Roles don’t do anything until you bind them to users. The following "RoleBinding" binds the previous Role to a user called "sky"
+
+```
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: read-deployments
+  namespace: shield
+subjects:
+  - kind: User
+    name: sky <<==== Name of the authenticated user
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+    kind: Role
+    name: read-deployments <<==== This is the Role to bind to the user
+    apiGroup: rbac.authorization.k8s.io
+```
+
+- The deployment of above 2 manifests will allow "sky" user to run commands such as "kubectl get deployments -n shield"
 
 
 
