@@ -399,6 +399,59 @@ kubectl get pv
 ===================================================================
 KUBERNETES SECURITY
 ===================================================================
+
+The section is divided as follows:
+• API security big picture
+• Authentication
+• Authorization (RBAC)
+• Admission control
+
+# Consider a quick example where a user called "bindesh" is trying to create a Deployment called "nginx-deployment" in the "dev" Namespace.
+
+2] Authentication
+==================
+- all requests to the API server include credentials. 
+- It’s the responsibility of the authentication layer to verify them. If verification fails, the API server returns an HTTP 401 and denies the request. If it succeeds, the request is forwarded to authorization.
+- The authentication layer in Kubernetes is pluggable; Popular modules include:
+  1. client certs
+  2. webhooks
+  3. integration with external identity management systems such as Active Directory (AD) and cloud-based Identity Access Management (IAM).
+- Kubernetes does not have its own built-in identity database; recommend to use an external system.
+
+- BY DEFAULT, most Kubernetes clusters support client certificates
+
+2.1] Checking your current authentication setup
+---------------------------------------------------
+- Your cluster details and user credentials are stored in a kubeconfig file. kubectl read this file to determine which cluster to send commands to and which credentials to use. 
+- The file is stored in the following locations:
+• Windows: C:\Users\<user>\.kube\config
+• Linux/Mac: /home/<user>/.kube/config
+
+kubeconfig file is divided into four top-level sections:
+
+• Clusters - defines one or more Kubernetes clusters | Each has a friendly name, an API server endpoint, and the public key of its certificate authority (CA).
+
+• Users - defines one or more users. Each user requires a name and token | The token is often an X.509 certificate signed by the cluster’s CA (or a CA trusted by the
+cluster).
+
+• Contexts - combines users and clusters
+
+• Current-context - is the cluster and user that kubectl will use for all commands
+
+
+3] Authorization
+==================
+
+This section covers the following:
+• RBAC big picture
+• Users and permissions
+• Cluster-level users and permissions
+• Pre-configured users and permissions
+
+
+
+
+
 kubectl get roles -A
 kubectl get rolesbindings -A
 
