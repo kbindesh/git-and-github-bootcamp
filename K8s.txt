@@ -469,15 +469,18 @@ The most common authorization module is RBAC (Role-Based Access Control). Primar
 
 • Roles - define a set of permissions | Namespace scoped
 • RoleBindings - RoleBindings bind them to users | Namespace scoped
-• ClusterRoles
-• ClusterRoleBindings
+• ClusterRoles - is cluster-wide objects | Apply to all Namespaces
+• ClusterRoleBindings - is cluster-wide objects | Apply to all Namespaces
 
 # Closer look at the Role Rules
 --------------------------------
 - Role objects have the following three properties that define which actions are allowed against which objects:
-• verbs
-• apiGroups
-• resources
+• verbs - lists permitted actions | create delete get list patch update watch
+• apiGroups - identify which objects the actions are permitted on | storage.k8s.io, apps, "", * (all)
+• resources - identify which objects the actions are permitted on | pods, secrets, deployments, storageClass
+
+# To list all API resources and supported verbs
+kubectl api-resources --sort-by name -o wide
 
 - The following resource manifest defines a Role object called "read-deployments" and grants permission to get, watch, and list Deployment objects in the shield
 Namespace.
@@ -512,7 +515,33 @@ roleRef:
     apiGroup: rbac.authorization.k8s.io
 ```
 
-- The deployment of above 2 manifests will allow "sky" user to run commands such as "kubectl get deployments -n shield"
+>> The deployment of above 2 manifests will allow "sky" user to run commands such as "kubectl get deployments -n shield"
+
+
+- IMPORTANT: A powerful pattern is to use ClusterRoles to define roles at the cluster level and then use RoleBindings to bind them to specific Namespaces. Explain with Diag.
+
+- The following YAML defines the "read-deployments" role at the cluster level. You can then use this in selected Namespaces via RoleBindings — one
+RoleBinding per Namespace.
+
+```
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole <<==== Cluster-scoped role
+metadata:
+  name: read-deployments
+rules:
+  - verbs: ["get", "watch", "list"]
+    apiGroups: ["apps"]
+    resources: ["deployments"]
+```
+
+3.3] Pre-created users and permissions
+-----------------------------------------
+
+
+
+
+
+
 
 
 
