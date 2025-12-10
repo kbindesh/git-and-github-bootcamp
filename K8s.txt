@@ -924,3 +924,200 @@ spec:
 - These are particularly useful with slow-starting containers, preventing the kubelet from killing them before they are up and running when a liveness probe fails.
 - If liveness probes are used on the same endpoint as a startup probe, set the failureThreshold of the startup probe higher to support long startup times.
 - If it fails, the event is logged, and the kubelet kills the container according to the configured restartPolicy.
+
+
+
+Troubleshooting cluster components and Applications
+=====================================================
+
+• Kubernetes troubleshooting general practices
+• Troubleshooting cluster components
+• Troubleshooting applications
+
+-----------------------------------------------------
+# Inspecting the cluster
+kubectl cluster-info
+
+# If you want further information for debugging and diagnosis
+kubectl cluster-info dump
+
+# Inspecting the node
+kubectl get nodes
+
+[The ROLES column shows the role of your node – it could be a control-plane, etcd, or worker]
+
+- The STATUS column shows the current condition of the running nodes – the ideal status that we all
+love is Ready.
+
+Ready - The node is healthy and ready to accept pods.
+DiskPressure -  The disk capacity is low.
+MemoryPressure - The node memory is low.
+PIDPressure - Too many processes are running on the node.
+NetworkUnavailable - The networking is incorrectly configured.
+SchedulingDisabled - This is not a condition in the Kubernetes API but it appears after you
+cordon a node. 
+
+
+# Inspect the node information
+kubectl describe node docker-desktop
+
+Troubleshooting a system-reserved process
+--------------------------------------------
+kubectl get pods -n kube-system
+
+[When you see any process that is not in the Running status, it means that it was unhealthy]
+
+- you can use the kubectl describe pod command to check
+
+kubectl describe pod kube-proxy-9rfxs -n kube-system
+kubectl describe pod kube-proxy-9rfxs -n kube-system | grep Node:
+
+[Now, you know the kube-proxy is a DaemonSet]
+kubectl describe daemonset kube-proxy -n kube-system
+
+- Knowing the pod configuration from the preceding output is not enough. When the pod is not up and
+running for some reason, the logs are much handier
+
+kubectl logs kube-proxy-9rfxs -n kube-system
+
+
+Troubleshooting the kubelet agent
+----------------------------------
+
+# After checking on the node status, we could SSH to that worker node
+systemctl status kubelet
+
+- In the case that the status is not active (running), we could use journalctl to obtain the
+logs on the kubelet service on the worker node
+journalctl -u kubelet.service
+
+
+- Once you have fixed the issue, you should restart the kubelet agent
+systemctl restart kubelet
+
+------------------------------
+Troubleshooting applications
+------------------------------
+
+- This section is about troubleshooting containerized applications deployed on the Kubernetes
+cluster - containerized-application-related Kubernetes objects:
+  - pods
+  - containers
+  - services
+  - StatefulSets
+
+# Getting a high-level view | you can easily find which pods have failed
+-------------------------------------------------------------------------
+kubectl get pods --all-namespaces
+
+
+# Inspecting namespace events
+------------------------------
+kubectl get events
+
+From the preceding command output, we get some imp details:
+• The TYPE column shows the event type – it could be Normal or Warning.
+• The REASON column is tied to the behaviors of the events.
+• The OBJECT column shows to which object this event is attached.
+• The MESSAGE column shows what happened to a specific pod or container.
+
+kubectl get events --sort-by=.metadata.creationTimestamp
+kubectl get events -n app --sort-by=.metadata.creationTimestamp
+
+Troubleshooting failing pods
+-------------------------------
+
+kubectl get pod old-busybox -n app
+
+[We may notice that the STATUS shows there is an image error (ErrImagePull)]
+
+- Now, we can use the kubectl describe pod command to get more details:
+
+kubectl describe pod old-busybox -n app
+
+[You may notice there is a section called Events where the events related to this pod will be there]
+
+We can also use kubectl logs to get some information about the erroneous pod and the output
+will give you more detailed information:
+
+kubectl logs old-busybox -n app
+
+[Error from server (BadRequest): container "old-busybox" in pod "old-busybox" is waiting to start: trying and failing to pull image]
+
+- From the previous few outputs, we know the image was not correct. As this is a pod, we can use the
+following command to export the pod definition to a yaml file called my-old-pod.yaml:
+
+kubectl get pod old-busybox -n app -o yaml > my-old-pod.yaml
+
+# To examine the pod definition
+cat my-old-pod.yaml
+vi my-old-pod.yaml
+
+After you’re done with the editing, you need to delete the old pod using the kubectl delete
+command, as follows:
+kubectl delete pod old-busybox -n app
+
+Then, deploy my-old-pod using the kubectl apply -f command, and then you’ll see the
+pod is up and running again.
+
+
+--------------------------------------------------------------------------------------------
+
+The failing pods include the following cases
+
+Failing type | How to debug?
+
+- Pending - Use the kubectl describe command – sometimes, it is a scheduling
+issue because of no available nodes or exceeding the resource. Make sure
+you check the node status and use the top command to check out the
+resource allocation.
+
+- CrashLoopBackOff - Use the kubectl describe and kubectl log commands – sometimes,
+it was caused by cluster components, so make sure you narrow the error
+down by using the outside-in approach.
+
+- Completed - Use the kubectl describe command to find out why it happened
+and then fix it.
+
+- Error - Use the kubectl describe command to find out why it happened
+and then fix it.
+
+- ImagePullBackOff - kubectl describes and mostly needs to export the YAML file, then update
+the image. Also possible to use the set image command.
+
+
+========================================
+Troubleshooting Security and Networking
+========================================
+
+• Troubleshooting RBAC failures
+• Troubleshooting networking
+
+
+---------------------------------------------
+Troubleshooting RBAC failures
+---------------------------------------------
+
+kubectl config view
+kubectl config view --raw
+kubectl config current-context
+kubectl config use-context my-dev-context
+kubectl config set-context my-new-context --cluster=my-cluster --user=my-user --namespace=default
+kubectl config set-cluster my-cluster --server=https://kubernetes.example.com --certificate-authority=/path/to/ca.crt
+kubectl config set-credentials my-user --client-certificate=/path/to/client.crt --client-key=/path/to/client.key
+
+kube-apiserver --authorization-mode=RBAC
+kubectl auth can-i delete deployment --as=rbac-user
+
+
+Troubleshooting networking
+--------------------------
+
+# Troubleshooting a Kubernetes DNS server
+
+kubectl get pods -n kube-system | grep dns
+kubectl describe deploy coredns -n kube-system
+kubectl get svc -n kube-system
+kubectl logs coredns-64897985d-brqfl -n kube-system
+
+
