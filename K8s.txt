@@ -1121,3 +1121,243 @@ kubectl get svc -n kube-system
 kubectl logs coredns-64897985d-brqfl -n kube-system
 
 
+=================================================================
+Deploy Application and Expose it securely using INGRESS with TLS
+=================================================================
+
+Develop Following manifests:
+- Namespace
+- 2 Deployments - Blue and Yellow apps
+- 2 Services (ClusterIP) - Blue and Yellow
+
+
+---------------------------devops-ingress.yml------------------------------
+apiVersion: v1
+kind: Namespace
+metadata:
+  name:  devops
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: devops
+  name: devops-ingress-blue-deployment
+  labels:
+    app.kubernetes.io/name: devops-ingress-blue
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: devops-ingress-blue
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: devops-ingress-blue
+        app.kubernetes.io/version: 1.0.0
+    spec:
+      containers:
+      - name: devops-blue
+        image: timpamungkas/devops-blue:1.0.0
+        resources:
+          limits:
+            cpu: "0.5"
+            memory: 500M
+        ports:
+        - name:  http
+          containerPort: 8111
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /devops/blue/actuator/health/readiness
+            port: 8111
+            scheme: HTTP
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 5
+        livenessProbe:
+          httpGet:
+            path: /devops/blue/actuator/health/liveness
+            port: 8111
+            scheme: HTTP
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 5
+  replicas: 1
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: devops
+  name: devops-ingress-yellow-deployment
+  labels:
+    app.kubernetes.io/name: devops-ingress-yellow
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: devops-ingress-yellow
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: devops-ingress-yellow
+        app.kubernetes.io/version: 1.0.0
+    spec:
+      containers:
+      - name: devops-yellow
+        image: timpamungkas/devops-yellow:1.0.0
+        resources:
+          limits:
+            cpu: "0.5"
+            memory: 500M
+        ports:
+        - name:  http
+          containerPort: 8112
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /devops/yellow/actuator/health/readiness
+            port: 8112
+            scheme: HTTP
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 5
+        livenessProbe:
+          httpGet:
+            path: /devops/yellow/actuator/health/liveness
+            port: 8112
+            scheme: HTTP
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 5
+  replicas: 1
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: devops
+  name: devops-blue-clusterip
+  labels:
+    app.kubernetes.io/name: devops-ingress-blue
+spec:
+  selector:
+    app.kubernetes.io/name: devops-ingress-blue
+  ports:
+  - port: 8111
+    name: http      # optional, to be used for accessing through kubectl proxy
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: devops
+  name: devops-yellow-clusterip
+  labels:
+    app.kubernetes.io/name: devops-ingress-yellow
+spec:
+  selector:
+    app.kubernetes.io/name: devops-ingress-yellow
+  ports:
+  - port: 8112
+    name: http      # optional, to be used for accessing through kubectl proxy
+---------------------------devops-ingress.yml------------------------------
+
+
+Create manifest for Ingress Resource
+
+1] First check the list of all the IngressClasses
+kubectl get ingressclasses
+
+2] Create Ingress resource manifest
+
+---------------------------ingress-nginx.yml------------------------------
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: devops
+  name: devops-ingress-nginx
+  labels:
+    app.kubernetes.io/name: devops-ingress-nginx
+  annotations:
+    nginx.ingress.kubernetes.io/service-upstream: "true"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "8"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "8"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "8"
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      - path: /devops/blue
+        pathType: Prefix
+        backend:
+          service:
+            name: devops-blue-clusterip
+            port:
+              number: 8111
+      - path: /devops/yellow
+        pathType: Prefix
+        backend:
+          service:
+            name: devops-yellow-clusterip
+            port:
+              number: 8112
+
+---------------------------ingress-nginx.yml------------------------------
+
+Install nginx ingress
+
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/refs/heads/main/deploy/static/provider/baremetal/deploy.yaml
+-------------------------------------------------
+Access the application using ingress nodeport service
+
+kubectl get all -n ingress-nginx
+[Check the status of Pod | Check the NodePort service IP, port]
+
+curl http://10.0.0.10:32488/devops/yellow/api/hello
+curl http://10.0.0.10:32488/devops/bluw/api/hello
+-----------------------------------------------------
+Generate TLS Certificate - api.devops.local
+
+https://regery.com/en/security/ssl-tools/self-signed-certificate-generator
+
+1] Now create a secret from the above generated TLS Certificate & Key
+kubectl create secret tls api-devops-local-cert --key api-devops.local-privateKey.key --cert api-devops.local.cert
+
+2] Open Ingress resource manifest and go to spec section
+
+spec:
+  ingressClassName: nginx
+  tls:
+    - secretName: api-devops-local-cert
+      hosts:
+        - api.devops.local
+  rules:
+  - host: api.devops.local
+    http:
+      paths:
+      - path: /devops/blue
+        pathType: Prefix
+        backend:
+          service:
+            name: devops-blue-clusterip
+            port:
+              number: 8111
+      - path: /devops/yellow
+        pathType: Prefix
+        backend:
+          service:
+            name: devops-yellow-clusterip
+            port:
+              number: 8112
+
+
+
