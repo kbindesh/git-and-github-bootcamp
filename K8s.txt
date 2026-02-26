@@ -1360,4 +1360,59 @@ spec:
               number: 8112
 
 
+SERVICE ACCOUNTS
+=====================
+
+kubectl run --image=nginx nginx-pod
+kubectl get pods
+kubectl describe pod nginx-pod
+
+[observe the Service Account field (default)]
+
+# Now, get inside the pod and checkout the serviceAccount token
+kubectl exec -it nginx-pod -- bash
+
+cd /var/run/secrets/kubernetes.io/serviceaccount/
+
+[You will find the token]
+
+# Save the token in a variable and then use it to explicitly make a callout to API Server
+cat token
+
+token=$(cat token)
+
+kubectl cluster-info => https://10.0.0.10:6443
+
+curl -k -H "Authorization: Bearer $token" https://10.0.0.10:6443/api/v1 => PASS
+curl -k -H "Authorization: Bearer sdf334" https://10.0.0.10:6443/api/v1 => FAIL
+
+2] DEFAULT SERVICE ACCOUNT
+---------------------------
+- A default service account gets created with every Namespace including kube-system.
+
+# To check 
+kubectl get sa
+
+- When you create a new Namespace, again a new service account gets created along with it
+kubectl create namespace sample-app
+
+# To check the SA 
+kubectl get sa -n sample-app 
+
+=> Service Account and Permissions
+-----------------------------------
+Each SA can be associated with certain permissions (Read access to logs of Pods, Full Access to Pods) 
+
+
+=> Assigning ServiceAccounts to Pod
+-------------------------------------
+
+- default ServiceAccount
+- custom ServiceAccount 
+
+3] ServiceAccount Demo - with custom Namespace, role and RoleBinding
+------------------------------
+https://github.com/kbindesh/eks-bootcamp/blob/master/16-rbac-with-service-accounts.md
+
+
 
