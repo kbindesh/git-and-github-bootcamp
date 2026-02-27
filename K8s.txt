@@ -1414,5 +1414,101 @@ Each SA can be associated with certain permissions (Read access to logs of Pods,
 ------------------------------
 https://github.com/kbindesh/eks-bootcamp/blob/master/16-rbac-with-service-accounts.md
 
+# Create a Namespace - dev-ns
+kubectl create ns dev-ns
+
+
+# Create a ServiceAccount
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: webapp-sa
+  namespace: dev-ns
+
+
+# Create a Role
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-reader
+  namespace: dev-ns
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "watch", "list"]
+
+
+# Create a RoleBinding
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pod-reader-rolebinding
+  namespace: dev-ns
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: pod-reader
+subjects:
+  - kind: ServiceAccount
+    name: webapp-sa
+    namespace: dev-ns
+
+# Create a Pod with SA
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-sa
+  namespace: dev-ns
+spec:
+  containers:
+    - name: kubectl-c
+      image: alpine/kubectl:latest
+      command: ["/bin/sh", "-c"]
+      args: ["while true; do echo 'Pod is running'; sleep 5; done"]
+  serviceAccountName: webapp-sa
+
+
+kubectl apply -f <manifest_dir>
+kubectl get po,sa,role,rolebindings -n dev-ns
+
+# Get inside the pod and try making a callout to access k8s apis
+kubectl exec -n dev-ns -it pod-sa -- /bin/sh
+
+kubectl get pods -n dev-ns
+kubectl get ns
+kubectl get svc
+
+
+# How to generate a token for a serviceAccount
+
+- For Kubernetes versions 1.24 and later, tokens are bound to specific objects and have a limited lifespan by default
+
+1] Generate a time-bound token (recommended)
+kubectl create token <service-account-name> -n <namespace>
+kubectl create token <service-account-name> -n <namespace> --duration=2h
+
+2] Generate a long-lived (non-expiring) token
+
+- This is not recommended due to security risks, but it is possible by manually creating a Secret object of type kubernetes.io/service-account-token with an annotation referencing the service account. 
+
+
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Secret
+type: kubernetes.io/service-account-token
+metadata:
+  name: api-service-account-token
+  namespace: devops-tools
+  annotations:
+    kubernetes.io/service-account.name: api-service-account
+EOF
+
+# Retrieve the token from the created secret. The Kubernetes control plane will automatically populate this secret with a long-lived token:
+
+kubectl get secret api-service-account-token -n dev-ns -o=jsonpath='{.data.token}' | base64 --decode
 
 
