@@ -1547,20 +1547,20 @@ apt-get update
 apt-cache madison kubeadm
 
 # Install and Upgrade Kubeadm
-apt-get install -y kubeadm="1.32.2-1.1*"
-kubeadm upgrade plan
-kubeadm upgrade apply v1.32.2
+sudo apt-get install -y kubeadm="1.31.14-1.1"
+sudo kubeadm upgrade plan
+sudo kubeadm upgrade apply v1.31.14
 
 # Install and Upgrade kubelet and kubectl
-apt-cache madison kubelet
-apt-cache madison kubectl
-apt-get install -y kubelet="1.32.2-1.1*" kubectl="1.32.2-1.1"
+sudo apt-cache madison kubelet
+sudo apt-cache madison kubectl
+sudo apt-get install -y kubelet="1.31.14-1.1" kubectl="1.31.14-1.1"
 
-systemctl daemon-reload
-systemctl restart kubelet
+sudo systemctl daemon-reload
+sudo systemctl restart kubelet
 
 # Mark hold Kubernetes Component
-apt-mark hold kubelet kubectl kubeadm
+sudo apt-mark hold kubelet kubectl kubeadm
 
 # Final Verficiation
 kubectl get nodes
