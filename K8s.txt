@@ -1511,4 +1511,30 @@ EOF
 
 kubectl get secret api-service-account-token -n dev-ns -o=jsonpath='{.data.token}' | base64 --decode
 
+===============================================================
+UPGRADE KUBEADM BASED K8s CLUSTERS
+===============================================================
+
+- It is important to upgrade the k8s cluster in sequential way 1.31->1.32->1.33
+- If you're planning to upgrade k8s version, you'll have to upgrade both control plane and worker nodes
+- kubelet doesn't upgraded along with kubeadm upgrade process. Needs manual upgrade seperatly.
+
+
+# Determine the version to upgrade to
+apt-cache madison kubeadm
+
+# Check kubeadm version
+kubeadm version
+kubectl get nodes
+
+# Get the kubeadm upgrade plan
+kubectl upgrade plan
+
+# Setup K8s cluster with version 1.31
+
+Upgrading Control Plane
+-----------------------
+apt-mark unhold kubelet kubeadm kubectl
+
+# Configure repo for newer version
 
