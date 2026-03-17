@@ -1565,3 +1565,26 @@ sudo apt-mark hold kubelet kubectl kubeadm
 # Final Verficiation
 kubectl get nodes
 
+
+SECURITY CONTEXT in K8s
+=========================
+# Explaination
+- Refer to the SS for manifest
+
+# Insecure Pod demo
+- Refer to the SS for manifest
+
+kubectl apply -f insecure-pod.yml
+kubectl get pods
+kubectl exec -it insecure-pod -- sh
+id (observe the root user)
+ls (will list all the host directories which can be a risk)
+cd /boot or any other system directories and it will allow you to do that
+
+
+# Lab: Create another pod manifests (ss), and this time a secure one with SECURITY CONTEXT
+
+kubectl apply -f pod-with-sec-context.yml
+kubectl get pods
+kubectl exec -it pod-with-sec-context -- sh
+id (observe the UID, GID, fsGroup)
