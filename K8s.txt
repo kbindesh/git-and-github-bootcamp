@@ -1588,3 +1588,31 @@ kubectl apply -f pod-with-sec-context.yml
 kubectl get pods
 kubectl exec -it pod-with-sec-context -- sh
 id (observe the UID, GID, fsGroup)
+
+PRIVILAGED PODS
+===================
+
+# Create a non-privileged and a privileged POD
+kubectl run non-privileged --image=busybox -- sleep 3600
+kubectl run privileged-pod --image=busybox --privileged -- sleep 3600
+
+kubectl get pods
+
+# Now, connect to the non-privilaged Pod
+kubectl exec -it non-privileged -- sh
+cd /dev
+ls 
+dmesg
+[Access will be very limited]
+
+# Now, connect to the privilaged Pod
+kubectl exec -it privileged-pod -- sh
+cd /dev
+ls 
+dmesg
+
+IMAGEPULLPOLICY
+===================
+
+ADMISSION CONTROLLER
+======================
