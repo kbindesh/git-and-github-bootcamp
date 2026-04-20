@@ -145,3 +145,49 @@ roleRef:
   name: view                       # Name of the Role or ClusterRole to bind
   apiGroup: rbac.authorization.k8s.io # API group the role belongs to
 ```
+
+# Supply Chain Security
+
+## Key Concepts
+
+- Explain with the Analogy - Thief wants to enter house
+  
+- Vulnerabilities - A flaw, gap or weakness in the software design or architecture that leaves it open to attack. E.g. Small hole in the backside of house
+  
+- Exploit - A specific method or a tool or a piece of code used to take advantage of the vulnerability. It is an act of breaking-in. E.g. Using Jackhammer
+  
+- Payload and Post exploitation - the malicious action after the exploit has successfully breached. E.g. Steal money
+
+## Hands-on lab for  exploiting vulnerabilities present on target machine packages
+
+```bash
+sudo apt update
+sudo apt install nmap
+
+# List packages which are listening on the target server
+nmap -sV xx.xx.xx.xx
+nmap -sV -Pn 34.233.133.199
+
+[check the s/w version]
+
+# NIST (National Institute of Standards and Technology)
+# https://nvd.nist.gov/vuln/detail/CVE-2021-30047
+
+Check on rapid7 website
+
+# Install and Use msfconsole
+sudo apt update
+sudo apt install metasploit-framework
+
+# To verify the installation
+msfconsole
+
+# Search for the exploit related to the package installed on the target machine
+search OpenSSH
+
+use exploit/multi/persistence/ssh_key
+
+show options
+
+set PAYLOAD <any-script>
+```
