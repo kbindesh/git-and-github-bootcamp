@@ -191,3 +191,99 @@ show options
 
 set PAYLOAD <any-script>
 ```
+
+# Monitoring, Logging and Runtime Security
+
+## Install Falco
+-------------------
+
+https://falco.org/docs/setup/packages/#install-with-yum
+
+falco --version
+
+## Configuration and Rule Files and it's purpose
+/etc/falco
+
+## What are `FALCO rules`?
+---------------------------
+- https://falco.org/docs/concepts/rules/
+
+=> Structure of Falco rules
+- https://falco.org/docs/concepts/rules/basic-elements/ 
+
+=> Priority - https://falco.org/docs/concepts/rules/basic-elements/#priority
+
+## Lab-01: Invoking Falco rules (built-in)
+============================================
+
+```bash
+sudo systemctl status falco
+
+# get alerts based on the falco rules 
+journalctl -u falco-modern-bpf.service -f
+
+
+# Example-01
+# Now try to access /etc/shadow to trigger notifications | on a new tab
+cat /etc/shadow
+
+
+# Example-02
+# Create a Pod and exec into it with a bash
+kubectl run nginx-pod --image=nginx:latest
+
+kubectl get pods
+
+kubectl exec -it nginx-pod -- bash
+
+[Should have trigger a notification with the details]
+```
+
+## CREATING custom FALCO RULES 
+/etc/falco/falco_rules.yaml | /etc/falco/falco_rules.local.yaml 
+------------------------------------------------------------------------------------------
+
+Falco rules are written in YAML format. They define security policies by structuring rules, macros, and lists, which allows for monitoring system calls and container activity.
+
+=> Key Aspects of Falco Rules:
+
+- YAML Syntax: Rules are highly flexible and readable, organized into rules, lists, and macros.
+
+- Components: Each rule contains a rule name, desc (description), condition (boolean logic), output (alert message), and priority.
+
+- Condition Language: The condition field uses a specific filtering syntax to analyze events, such as container.id != host and proc.name = bash.
+
+- Files: Rules are typically defined in files ending in .yaml or .yml, often located in /etc/falco/falco_rules.yaml.
+
+
+## Lab-02: Create a custom Falco rule that detects the use of curl inside a container
+
+- Edit `/etc/falco/falco_rules.local.yaml` and add the following rule:
+
+```
+- rule: Curl Used in Container
+  desc: Detects when curl is executed inside a container, which could indicate a web fetch or data exfiltration.
+  condition: spawned_process and container and proc.name = curl
+  output: "Suspicious activity detected: curl executed in container (user=%user.name container_id=%container.id container_name=%container.name command=%proc.cmdline image=%container.image.repository)"
+  priority: WARNING
+  tags: [network, container, mitre_exfiltration]
+```
+
+### Test the created Falco Rule
+  - After adding the rule, restart the Falco service (sudo systemctl restart falco) and then execute a curl command inside any running container to verify the alert appears in your Falco logs.
+
+```bash
+# On tab-1
+systemctl restart falco
+systemctl status falco
+journalctl -u falco-modern-bpf.service -f
+
+
+# On tab-2
+kubectl exec -it nginx-pod -- bash
+curl google.com
+
+[Should see the alerts getting generated on Tab-1]
+```
+
+
