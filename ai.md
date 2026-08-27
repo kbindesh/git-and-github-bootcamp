@@ -36,6 +36,8 @@ Module-03: Key AI Techniques
 
 3.1 Machine Learning
 
+Anazlogy: Teachers-child <=> Scientists-Machine
+
 3.2 Supervised, Unsupervised and Reinforcement learning
 
 3.3 Deep Learning  
