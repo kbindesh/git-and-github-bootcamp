@@ -1,0 +1,133 @@
+Part 1: Generate & Sign Alice's TLS Certificate
+-------------------------------------------------
+
+1. Create a Working Directory & Keys
+
+mkdir -p certs && cd certs
+
+# Generate Alice's private key
+openssl genrsa -out alice.key 2048
+
+# Create the CSR (CN=alice sets her username to alice)
+openssl req -new -key alice.key -out alice.csr -subj "/CN=alice/O=developers"
+
+
+2. Sign the Certificate using Minikube's CA
+
+By default, Minikube stores its internal CA keys inside the ~/.minikube/ folder. We will use them to sign Alice's certificate for 365 days:
+
+openssl x509 -req -in alice.csr \
+  -CA ~/.minikube/ca.crt \
+  -CAkey ~/.minikube/ca.key \
+  -CAcreateserial \
+  -out alice.crt \
+  -days 365
+
+
+(You now have a trusted alice.crt certificate file ready to go).
+
+
+Part 2: Configure your kubeconfig File
+---------------------------------------
+
+Your ~/.kube/config file manages your access to clusters. 
+We need to add Alice as a User, create a isolated Context for her, and switch between them.
+
+# Add Alice as a User
+kubectl config set-credentials alice \
+  --client-certificate=$(pwd)/alice.crt \
+  --client-key=$(pwd)/alice.key
+
+# Create a New Context
+kubectl config set-context alice-minikube \
+  --cluster=minikube \
+  --user=alice
+
+# View your modified Kubeconfig
+kubectl config get-contexts
+
+Part 3: Deploy the Roles (As Admin)
+-------------------------------------
+
+Before switching to Alice, make sure you are in your default admin context (minikube) to create the development namespace and apply the RBAC rules.
+
+# Ensure you are admin
+kubectl config use-context minikube
+
+# Create the target namespace
+kubectl create namespace development
+
+3.1 Create Role and RoleBinding Manifests
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: development
+  name: pod-reader
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: read-pods-binding
+  namespace: development
+subjects:
+- kind: User
+  name: alice
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: pod-reader
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: node-reader
+rules:
+- apiGroups: [""]
+  resources: ["nodes"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: read-nodes-global-binding
+subjects:
+- kind: User
+  name: alice
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: node-reader
+  apiGroup: rbac.authorization.k8s.io
+
+Part-4: Switch Contexts & Test Alice's Access
+---------------------------------------------
+
+Now, let's swap our active context to Alice to see RBAC enforce boundaries.
+
+# Change your current-context to Alice
+kubectl config use-context alice-minikube
+
+# Test Permissions Using kubectl auth can-i
+
+# Test Namespace-Scoped Role (Allowed)
+kubectl auth can-i get pods -n development
+Expected Output: yes
+
+# Test Outside Her Assigned Namespace (Denied)
+kubectl auth can-i get pods -n default
+# Expected Output: no
+
+# Test Forbidden Action in Her Assigned Namespace (Denied)
+kubectl auth can-i delete pods -n development
+# Expected Output: no
+
+Part-5: Switch back to Admin
+-------------------------------
+kubectl config use-context minikube
