@@ -1,0 +1,156 @@
+In , probes are health checks that Kubernetes uses to see what is happening inside your containers. Think of them like a doctor checking on a patient to see if they are breathing (liveness) and ready to go to work (readiness).
+
+
+
+1. Liveness Probes: "Are you alive?"
+---------------------------------------
+A liveness probe checks if your application inside the container is still running or if it has crashed/frozen completely.
+• The Analogy: Imagine your computer completely freezes up and stops responding to your mouse or keyboard. The only way to fix it is to press the physical restart button.
+• What Kubernetes does: If the liveness probe fails, Kubernetes assumes your container is deadlocked or broken. It immediately destroys the container and restarts a fresh one.
+
+2. Readiness Probes: "Are you ready to work?"
+--------------------------------------------
+A readiness probe checks if your application is fully booted up and ready to accept internet traffic (requests) from users.
+• The Analogy: When you turn on your computer, it takes a minute to load the operating system. Even though the computer is technically "alive" (the screen is on), it isn't "ready" for you to open a web browser yet.
+• What Kubernetes does: If the readiness probe fails, Kubernetes does not restart the container. Instead, it stops sending user traffic to that container until it passes the check.
+
+
+Step-by-Step Example
+======================
+Let's look at a simple YAML configuration for a web application container using both probes.
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-web-app
+spec:
+  containers:
+  - name: web-container
+    image: nginx
+    ports:
+    - containerPort: 80
+    
+    # 1. READINESS PROBE
+    readinessProbe:
+      httpGet:
+        path: /ready
+        port: 80
+      initialDelaySeconds: 15
+      periodSeconds: 5
+
+    # 2. LIVENESS PROBE
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: 80
+      initialDelaySeconds: 20
+      periodSeconds: 10
+
+
+
+How this example works in real life:
+
+1. Step 1: Container Starts – Your application starts loading. It needs to load configuration files and connect to a database.
+2. Step 2: Waiting to be Ready – The readinessProbe waits 15 seconds (initialDelaySeconds), then hits the /ready URL every 5 seconds (periodSeconds). Until the app replies with a "success" code (200 OK), Kubernetes won't send any real users to this pod.
+3. Step 3: Open for Business – Once /ready succeeds, users can access your app.
+4. Step 4: Continuous Health Checks – While running, the livenessProbe waits 20 seconds at the start, then checks the /healthz URL every 10 seconds.
+5. Step 5: The Recovery – If the app gets stuck in an infinite loop and stops replying to /healthz, Kubernetes notices the failure, kills the container, and spins up a brand-new one automatically.
+
+
+To handle slow-starting apps or alternative check methods, Kubernetes offers a third probe type and multiple ways to execute the checks.
+Here is how startup probes work, followed by an example using command scripts instead of web URLs.
+
+
+
+. Startup Probes: "Are you done booting up?"
+
+A startup probe disables liveness and readiness checks until your application has completely finished its initial boot-up process.
+• The Problem: If you have a legacy application or a large Java app that takes 2 minutes to start, a liveness probe might think the app is frozen and restart it while it is still trying to boot. This creates a never-ending loop of restarts.
+• The Solution: The startup probe acts as a shield. It checks if the app has started. Once it succeeds, it steps aside and hands over the job to the liveness and readiness probes. If it fails after a certain timeout, Kubernetes kills the container.
+
+
+Example: Using Command Scripts (Exec Probes)
+============================================
+nstead of checking a web URL (httpGet), you can tell Kubernetes to run a specific terminal command or script inside the container (exec). If the command returns a status code of 0, the check passes. Anything else is a failure.
+This is perfect for background workers, databases, or legacy apps that don't have a web server built-in
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: background-worker-app
+spec:
+  containers:
+  - name: worker-container
+    image: my-worker-image:latest
+    
+    # 1. STARTUP PROBE (Using a web check or command)
+    # This gives the container up to 60 seconds to boot before liveness takes over.
+    startupProbe:
+      exec:
+        command:
+        - cat
+        - /tmp/ready-file
+      failureThreshold: 12
+      periodSeconds: 5
+
+    # 2. LIVENESS PROBE (Using a command check)
+    # Checks if the background processing service is actually running.
+    livenessProbe:
+      exec:
+        command:
+        - pgrep
+        - python3
+      initialDelaySeconds: 5
+      periodSeconds: 10
+
+
+How this configuration works step-by-step:
+
+1. The Shield Activates: As soon as the container starts, the startup probe checks if a file named /tmp/ready-file exists by running cat /tmp/ready-file.
+2. The Boot Window: It checks every 5 seconds and is allowed to fail up to 12 times (failureThreshold). This gives the application a safe window of 60 seconds (12 x 5) to create that file and finish booting.
+3. Liveness Takes Over: Once that file is detected, the startup probe stops running. Now, the liveness probe wakes up.
+4. Continuous Monitoring: Every 10 seconds, the liveness probe runs pgrep python3 to make sure the core Python process hasn't crashed. If the process dies, the command fails, and Kubernetes restarts the container.
+
+
+Other than httpGet, Kubernetes supports three other mechanism types to check the health of your containers. They allow you to monitor everything from databases and background workers to secure communication networks.
+Here is the complete list of the other probe mechanisms, explained simply.
+
+
+exec (Command Action)
+==========================
+Instead of hitting a web URL, Kubernetes runs a specific terminal command inside your container.
+• How it works: If the command finishes successfully (returns an exit code of 0), the container is healthy. If it returns any other number, it fails.
+• Best for: Background processing apps, script-based workers, or apps that don't use the web.
+• Example: Checking if a background process is still running:
+
+livenessProbe:
+  exec:
+    command:
+    - pgrep
+    - my-worker-process
+
+
+tcpSocket (TCP Connection Check)
+=================================
+Kubernetes attempts to open a pure network connection (TCP handshake) to a specific port on your container.
+• How it works: If Kubernetes can successfully open the port connection, the check passes. If it gets a connection refused or a timeout, it fails. It doesn't care what data is inside; it just checks if the "door is open."
+
+
+• Best for: Databases (like MySQL, PostgreSQL, or Redis) and other non-HTTP network services.
+• Example: Checking if a database port is open and listening:
+
+readinessProbe:
+  tcpSocket:
+    port: 3306
+
+
+grpc (gRPC Health Check)
+==========================
+This mechanism is designed for modern microservices that use gRPC (a high-performance communication framework) instead of traditional HTTP.
+• How it works: Kubernetes sends a standard gRPC health check RPC call to the container. If the application responds that its status is SERVING, the check passes.
+• Best for: Cloud-native microservices architectures that use gRPC for fast inter-service communication.
+• Example: Checking a gRPC service on port 3000:
+
+livenessProbe:
+  grpc:
+    port: 3000
