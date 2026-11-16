@@ -23,6 +23,7 @@ Before deploying the stack, ensure your environment and EKS cluster meet these r
 4. Amazon EBS CSI Driver (Critical Storage Dependency):
    - Prometheus and Grafana require PersistentVolumeClaims (PVCs) to store time-series metrics and dashboards.
    - On modern EKS clusters, EBS volumes will not provision automatically unless the Amazon EBS CSI Driver add-on is installed. Without it, Prometheus pods remain stuck in Pending state.
+   - eksctl create iamserviceaccount --name ebs-csi-controller-sa --namespace kube-system --cluster labekscluster --role-name AmazonEKS_EBS_CSI_DriverRole --role-only  --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy --approve
    - eksctl create addon --cluster labekscluster --name aws-ebs-csi-driver --version latest --service-account-role-arn arn:aws:iam::154511248558:role/AmazonEKS_EBS_CSI_DriverRole --force
 
 ## Step-1: Verify Cluster Access & Storage Class
